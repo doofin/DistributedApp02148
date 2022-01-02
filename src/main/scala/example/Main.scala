@@ -4,7 +4,7 @@ import org.jspace.FormalField
 import org.jspace.SequentialSpace
 import org.jspace.Space
 
-object Hello {
+object Main {
   def main(args: Array[String]) = {
     import org.jspace.FormalField
     import org.jspace.SequentialSpace
