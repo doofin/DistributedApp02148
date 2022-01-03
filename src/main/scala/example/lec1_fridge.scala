@@ -1,67 +1,49 @@
 package example
 
+import example.ScalaSpaces._
 import org.jspace._
-import scala.jdk.CollectionConverters._
-
 //https://github.com/pSpaces/jSpace-examples/blob/master/tutorial/fridge-0/Fridge_0.java
 object lec1_fridge {
-  def run = {
-    val tuple: Tuple = new Tuple("milk", 1)
-    System.out.println("We just created tuple")
-    System.out.println(tuple)
-
-//    System.out.println("The fields of ")
-//    System.out.println(tuple)
-//    System.out.println(" are ")
-//    System.out.println(tuple.getElementAt(0))
-//    System.out.println(" and ")
-//    System.out.println(tuple.getElementAt(1))
+  def run(): Unit = {
+    val tuple@SeqView(a, b) = new Tuple("milk", 1)
+    println(s"The fields of $tuple are $a and $b")
 
     // Creating a space.
-    val fridge: Space = new SequentialSpace // or FIFOSpace, LIFOSpace
+    val fridge = new SequentialSpace
 
     // Adding tuples.
     fridge.put("coffee", 1)
-    fridge.put("coffee", 1)
     fridge.put("clean kitchen")
     fridge.put("butter", 2)
-    fridge.put("milk",3)
+    fridge.put("milk", 3)
 
-    // Looking for a tuple.
-    val obj1 = fridge.queryp(new ActualField("clean kitchen"))
-    if (obj1 != null) System.out.println("We need to clean the kitchen")
+    fridge.querypS("clean kitchen") foreach { _ => println("We need to clean the kitchen") }
 
-    // Removing a tuple.
-    val obj2 = fridge.getp(new ActualField("clean kitchen"))
-    if (obj2 != null) System.out.println("Cleaning...")
+    fridge.getpS("coffee", classOf[Integer]) foreach { case (_, x) => println(s"Coffee : $x") }
 
     // Looking for a tuple with pattern matching.NPE here!
-    var numberOfBottles = 0
-    val objs3 =
-        fridge.queryp(new ActualField("milk"), new FormalField(classOf[Integer]))
-    if (objs3 != null) {
-      numberOfBottles = objs3(1).asInstanceOf[Integer]
+    fridge.querypS("milk", classOf[Integer]).foreach { case (_, numberOfBottles) =>
+      // Updating a tuple
+      if (numberOfBottles <= 10) {
+        println("We plan to buy milk, but not enough...")
 
+        fridge.getpS("milk", classOf[Integer]) foreach {
+          case (_, newNumber) => fridge.put("milk", newNumber + 1)
+        }
+      }
     }
 
-    // Updating a tuple.
-    if (objs3 != null && numberOfBottles <= 10) {
-      System.out.println("We plan to buy milk, but not enough...")
-      val objs4 =
-        fridge.getp(new ActualField("milk"), new FormalField(classOf[Integer]))
-      numberOfBottles = objs4(1).asInstanceOf[Integer]
-      fridge.put("milk", numberOfBottles + 1)
-    }
+    // Check if an item is in the list already and update it, else add this amount to the list.
+    addItemAndAmount("bread", 2)
+    addItemAndAmount("coffee", 1)
 
-    val groceryList = fridge.queryAll(
-      new FormalField(classOf[String]),
-      new FormalField(classOf[Integer])
-    )
+    def addItemAndAmount(itemName: String, amount: Int) =
+      fridge.getpS(itemName, classOf[Integer]) match {
+        case None => fridge.put(itemName, amount)
+        case Some((_, num)) => fridge.put(itemName, num + amount)
+      }
 
-    System.out.println("Items to buy: ")
-
-    for (obj <- groceryList.asScala) {
-      println(obj(0),obj(1))
-    }
+    println("Items to buy: ")
+    fridge.queryAllS(classOf[String], classOf[Integer]) foreach println
   }
 }
