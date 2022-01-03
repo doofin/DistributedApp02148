@@ -2,6 +2,8 @@ package example
 
 import org.jspace._
 import scala.jdk.CollectionConverters._
+
+//https://github.com/pSpaces/jSpace-examples/blob/master/tutorial/fridge-0/Fridge_0.java
 object lec1_fridge {
   def run = {
     val tuple: Tuple = new Tuple("milk", 1)
