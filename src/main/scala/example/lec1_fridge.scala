@@ -5,9 +5,9 @@ import scala.jdk.CollectionConverters._
 object lec1_fridge {
   def run = {
     val tuple: Tuple = new Tuple("milk", 1)
-//    System.out.println("We just created tuple")
+    System.out.println("We just created tuple")
     System.out.println(tuple)
-//
+
 //    System.out.println("The fields of ")
 //    System.out.println(tuple)
 //    System.out.println(" are ")
@@ -23,6 +23,7 @@ object lec1_fridge {
     fridge.put("coffee", 1)
     fridge.put("clean kitchen")
     fridge.put("butter", 2)
+    fridge.put("milk",3)
 
     // Looking for a tuple.
     val obj1 = fridge.queryp(new ActualField("clean kitchen"))
@@ -35,8 +36,11 @@ object lec1_fridge {
     // Looking for a tuple with pattern matching.NPE here!
     var numberOfBottles = 0
     val objs3 =
-      fridge.queryp(new ActualField("milk"), new FormalField(classOf[Int]))
-    numberOfBottles = objs3(1).asInstanceOf[Int]
+        fridge.queryp(new ActualField("milk"), new FormalField(classOf[Integer]))
+    if (objs3 != null) {
+      numberOfBottles = objs3(1).asInstanceOf[Integer]
+
+    }
 
     // Updating a tuple.
     if (objs3 != null && numberOfBottles <= 10) {
@@ -55,7 +59,7 @@ object lec1_fridge {
     System.out.println("Items to buy: ")
 
     for (obj <- groceryList.asScala) {
-      println(obj)
+      println(obj(0),obj(1))
     }
   }
 }
