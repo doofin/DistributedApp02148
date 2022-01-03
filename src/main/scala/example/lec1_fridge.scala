@@ -8,12 +8,12 @@ object lec1_fridge {
     System.out.println("We just created tuple")
     System.out.println(tuple)
 
-//    System.out.println("The fields of ")
-//    System.out.println(tuple)
-//    System.out.println(" are ")
-//    System.out.println(tuple.getElementAt(0))
-//    System.out.println(" and ")
-//    System.out.println(tuple.getElementAt(1))
+    System.out.println("The fields of ")
+    System.out.println(tuple)
+    System.out.println(" are ")
+    System.out.println(tuple.getElementAt(0))
+    System.out.println(" and ")
+    System.out.println(tuple.getElementAt(1))
 
     // Creating a space.
     val fridge: Space = new SequentialSpace // or FIFOSpace, LIFOSpace
@@ -37,10 +37,8 @@ object lec1_fridge {
     var numberOfBottles = 0
     val objs3 =
         fridge.queryp(new ActualField("milk"), new FormalField(classOf[Integer]))
-    if (objs3 != null) {
-      numberOfBottles = objs3(1).asInstanceOf[Integer]
+    if (objs3 != null)   numberOfBottles = objs3(1).asInstanceOf[Integer]
 
-    }
 
     // Updating a tuple.
     if (objs3 != null && numberOfBottles <= 10) {
@@ -50,6 +48,20 @@ object lec1_fridge {
       numberOfBottles = objs4(1).asInstanceOf[Integer]
       fridge.put("milk", numberOfBottles + 1)
     }
+   // Check if an item is in the list already and update it, else add this amount to the list.
+    addItemAndAmount("bread",2)
+    addItemAndAmount("coffee",1)
+    def addItemAndAmount(itemName:String, amount:Int ) {
+      val objs5 = fridge.queryp(new ActualField(itemName), new FormalField(classOf[Integer]))
+      if (objs5 != null) {
+        val objs6 = fridge.getp(new ActualField(itemName), new FormalField(classOf[Integer]))
+        val numberOfBread = objs6(1).asInstanceOf[Integer]
+        fridge.put(itemName, numberOfBread + amount)
+      } else {
+        fridge.put(itemName, amount)
+      }
+    }
+
 
     val groceryList = fridge.queryAll(
       new FormalField(classOf[String]),
