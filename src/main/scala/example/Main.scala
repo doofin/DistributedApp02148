@@ -6,7 +6,8 @@ import org.jspace.Space
 
 object Main {
   def main(args: Array[String]) = {
-    lec1_fridge.run
+    //lec1_fridge.run
+    lec2_philosopher.run
   }
 
   def test1 = {
