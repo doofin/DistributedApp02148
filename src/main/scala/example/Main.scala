@@ -14,5 +14,8 @@ object Main {
     inbox.put("Hello World!")
     val tuple = inbox.get(new FormalField(classOf[String]))
     System.out.println(tuple(0))
+    val harald = new HaraldTestingArea
+    harald.runAll()
   }
+
 }
