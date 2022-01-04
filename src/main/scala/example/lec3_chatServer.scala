@@ -21,8 +21,7 @@ package example {
       // Keep reading chat messages and printing them // Keep reading chat messages and printing them
       println("connection setup, ready to chat!")
       while (true) {
-        println("entered chat")
-        val t = chat.get(new FormalField(classOf[String]), new FormalField(classOf[String]))
+        var t = chat.get(new FormalField(classOf[String]), new FormalField(classOf[String]))
         System.out.println(t(0) + ":" + t(1))
       }
 

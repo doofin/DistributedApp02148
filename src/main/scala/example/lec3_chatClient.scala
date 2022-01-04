@@ -2,13 +2,27 @@ package example
 
 import org.jspace.RemoteSpace
 
+import scala.io.StdIn.readLine
+
+
 object lec3_chatClient {
   var port = 31145
   def main(args: Array[String]) ={
-    val server = new RemoteSpace("tcp://localhost:" + port + "/?conn)")
+
+    val url ="tcp://localhost:" + port +"/chat?conn)"
+    /*
+    val chat = new RemoteSpace(url)
     while(true) {
-      val message = scala.io.StdIn.readLine("Enter message> ")
-      server.put("Harald",message)
+        println("enter message")
+        val message = readLine()
+        chat.put("Harald",message)
+    }
+     */
+    while(true) {
+      val chat = new RemoteSpace(url)
+      println("enter message")
+      val message = readLine()
+      chat.put("Harald",message)
     }
   }
 }
