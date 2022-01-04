@@ -1,6 +1,7 @@
 package example.exercises
 
 import example.ScalaSpaces._
+import example._
 import org.jspace.{SequentialSpace, Tuple}
 
 //https://github.com/pSpaces/jSpace-examples/blob/master/tutorial/fridge-0/Fridge_0.java

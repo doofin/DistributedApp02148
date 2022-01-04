@@ -5,11 +5,11 @@ import org.jspace._
 import scala.jdk.CollectionConverters._
 import scala.language.implicitConversions
 
-object ScalaSpaces {
-  object SeqView {
-    def unapplySeq(tuple: Tuple): Option[Seq[Any]] = Some(Seq.from(tuple.asScala))
-  }
+object SeqView {
+  def unapplySeq(tuple: Tuple): Option[Seq[Any]] = Some(Seq.from(tuple.asScala))
+}
 
+object ScalaSpaces {
   implicit class SpaceOps(space: Space) {
     //region getS
 
@@ -119,6 +119,20 @@ object ScalaSpaces {
       }
 
     //endregion
+  }
+
+  implicit class RunnableOps(runnable: Runnable) {
+    private[this] class RunnableWrapper(wrapped: Runnable) extends Runnable {
+      override def run(): Unit = try wrapped.run() catch {
+        case _: InterruptedException =>
+      }
+    }
+
+    def spawn(): Thread = {
+      val thread = new Thread(new RunnableWrapper(runnable))
+      thread.start()
+      thread
+    }
   }
 }
 
