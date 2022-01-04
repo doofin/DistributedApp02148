@@ -1,7 +1,7 @@
 package example
 
-import example.exercises.lec2_philosopher
+import example.exercises.lec2_sort
 
 object Main {
-  def main(args: Array[String]): Unit = lec2_philosopher.run()
+  def main(args: Array[String]): Unit = lec2_sort.run
 }
