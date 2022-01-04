@@ -1,16 +1,10 @@
-package example
-
-import org.jspace.{ActualField, RemoteSpace, SequentialSpace}
-
-
-import java.io.IOException
+package example.exercises.Haraldexercises
 
 object lec3_philosopher {
   var N = 10
-  var me =0
+  var me = 0
   var port = 31145
   var host = "localhost"
-
 
 
   def main(args: Array[String]): Unit = {
@@ -37,12 +31,11 @@ object lec3_philosopher {
     if (args.length >= 4) port = args(3).toInt
 
 
-
     try {
       println("philosopher sitting down")
-      val url = "tcp://" + host + ":" +port + "/board?conn"
+      val url = "tcp://" + host + ":" + port + "/board?conn"
       val board = new RemoteSpace(url)
-      val philosopher = new philosopher(board,me,lec3_philosopher.N)
+      val philosopher = new philosopher(board, me, lec3_philosopher.N)
       philosopher.run
     } catch {
       case e: InterruptedException =>
@@ -51,9 +44,8 @@ object lec3_philosopher {
   }
 
 
-
   // philosopher defines the behaviour of a philosopher.
-  class philosopher(val board: RemoteSpace, var me: Int,val numberOfPhilosopher :Int) extends Runnable { // We define variables to identify the left and right forks.
+  class philosopher(val board: RemoteSpace, var me: Int, val numberOfPhilosopher: Int) extends Runnable { // We define variables to identify the left and right forks.
     val left = me
     val right = (left + 1) % numberOfPhilosopher
 
@@ -89,6 +81,4 @@ object lec3_philosopher {
   }
 
 
-
 }
-

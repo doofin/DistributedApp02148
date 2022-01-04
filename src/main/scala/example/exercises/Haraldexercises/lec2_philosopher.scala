@@ -1,7 +1,6 @@
-package example
+package example.exercises.Haraldexercises
 
-import org.jspace._
-
+import org.jspace.{ActualField, SequentialSpace}
 
 object lec2_philosopher { // N defines the number of philosophers.
   val N = 10
@@ -87,5 +86,3 @@ object lec2_philosopher { // N defines the number of philosophers.
     }
   }
 }
-
-
