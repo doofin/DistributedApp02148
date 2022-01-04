@@ -1,5 +1,7 @@
 package example.exercises.Haraldexercises
 
+import org.jspace._
+
 object lec3_philosopher {
   var N = 10
   var me = 0

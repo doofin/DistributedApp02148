@@ -1,5 +1,5 @@
 package example.exercises.Haraldexercises
-
+import org.jspace._
 object lec3_butler {
   val N = 10
   val port = 31145
