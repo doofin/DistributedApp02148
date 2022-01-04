@@ -1,4 +1,4 @@
-package example
+package example.exercises
 
 import example.ScalaSpaces._
 import org.jspace.SequentialSpace

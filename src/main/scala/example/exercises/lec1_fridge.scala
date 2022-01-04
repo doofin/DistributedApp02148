@@ -1,7 +1,8 @@
-package example
+package example.exercises
 
 import example.ScalaSpaces._
-import org.jspace._
+import org.jspace.{SequentialSpace, Tuple}
+
 //https://github.com/pSpaces/jSpace-examples/blob/master/tutorial/fridge-0/Fridge_0.java
 object lec1_fridge {
   def run(): Unit = {
