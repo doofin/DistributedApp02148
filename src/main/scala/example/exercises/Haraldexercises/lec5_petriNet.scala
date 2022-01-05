@@ -1,48 +1,50 @@
 package example.exercises.Haraldexercises
 
 
-import org.jspace.{ActualField, SequentialSpace, Space}
+import org.jspace.{ActualField, SequentialSpace}
 
 
 
 
 
 object lec5_petriNet {
-  def run() ={
+  def run():Unit ={
    println("hello")
-    val space = new SequentialSpace
+    val space = new SequentialSpace()
 
 
-    new Thread(new butler(space)).start
-    new Thread(new tasks(space,List("s2","s1"),List("s3"),"B")).start()
-    new Thread(new tasks(space,List("s1"),List("s1"),"A")).start()
-    new Thread(new tasks(space,List("s2"),List("s2"),"C")).start()
-    new Thread(new tasks(space,List("s3"),List("s1","s2"),"D")).start()
+    new butler(space).run()
+
+    new Thread(new tasks(space,List(1,2),List(3),"B")).start()
+    new Thread(new tasks(space,List(1),List(1),"A")).start()
+    new Thread(new tasks(space,List(2),List(2),"C")).start()
+    new Thread(new tasks(space,List(3),List(1,2),"D")).start()
+
 
 
   }
   class butler(space:SequentialSpace) extends Runnable{
-      def run() = {
+      def run():Unit = {
         println("placing locks")
-        space.put(new ActualField("lock"), new ActualField("s2"))
-        space.put(new ActualField("lock"), new ActualField("s1"))
+        space.put(1)
+        space.put(2)
         println("butler done!")
       }
   }
-  class tasks(space: SequentialSpace,s0:List[String],s1:List[String],me :String) extends Runnable{
-     def run() = {
+  class tasks(space: SequentialSpace,s0:List[Int],s1:List[Int],me:String) extends Runnable{
+     def run():Unit = {
       while (true) {
-        Thread.sleep(1000)
-        println("task " + me + " ready" )
-        s0.foreach(x=> {
-          println(me + " is looking for " +x)
-          space.getp(new ActualField("lock"),new ActualField(x))
-          println(me + " Got "+ x)
+        println(me + " Ready to work. waiting for input ...")
+        s0.foreach(x=>{
+           println(me + " waiting for " + x)
+           space.get(new ActualField(x))
+          println(me + " got " + x)
+
         })
-        println(me +" got lock. Doing task...")
-        Thread.sleep(1000)
-        println(me + " Task done! placing lock in next position")
-        s1.foreach(x=> space.put("lock",x))
+        s1.foreach({
+          x=> space.put(x:Int)
+            println(me + " placing back "+x)
+        })
 
 
       }

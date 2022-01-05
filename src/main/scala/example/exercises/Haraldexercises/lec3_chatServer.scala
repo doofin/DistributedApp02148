@@ -21,7 +21,7 @@ object lec3_chatServer {
     // Keep reading chat messages and printing them // Keep reading chat messages and printing them
     println("connection setup, ready to chat!")
     while (true) {
-      var t = chat.get(new FormalField(classOf[String]), new FormalField(classOf[String]))
+      val t = chat.get(new FormalField(classOf[String]), new FormalField(classOf[String]))
       System.out.println(t(0) + ":" + t(1))
     }
 
