@@ -39,7 +39,14 @@ object RGA {
       }
     }
 
-    def applyInserted(inserted: Inserted[String]): Unit = {
+    def applyOperation(op: Operation[String]): Unit = {
+      op match {
+        case i: Inserted[String] => applyInserted(i)
+        case r: Removed[String] => applyRemoved(r)
+      }
+    }
+
+    private [this] def applyInserted(inserted: Inserted[String]): Unit = {
       val Inserted(predecessor, ptr, value) = inserted
       // find index where predecessor vertex can be found
       val predecessorIdx = vertices.indexWhere(x => x._1 == predecessor)
@@ -51,7 +58,7 @@ object RGA {
       clock = math.max(ptr._1, clock)
     }
 
-    def applyRemoved(event: Removed[String]): Unit = {
+    private [this] def applyRemoved(event: Removed[String]): Unit = {
       val Removed(ptr) = event
       // find index where removed vertex can be found and tombstone it
       val index = vertices.indexWhere(x => x._1 == ptr)

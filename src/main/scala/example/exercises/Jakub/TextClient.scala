@@ -44,7 +44,7 @@ object TextClient {
     println("Waiting for input...")
     readLine() // TODO
 
-    write("Initial state. ", sessionSpace)
+    write("000", sessionSpace)
 
     // Start inline editor
     workOn(sessionSpace)
@@ -70,10 +70,17 @@ object TextClient {
 
     val rand = new Random()
 
-    for (i <- 1 to 10) {
-      Thread.sleep(500 + rand.nextInt(500))
-      write(s" ${myID.last}_[$i]", space)
-      println(s"State: ${myCRDT.asString}")
+    for (i <- 1 to 30) {
+      Thread.sleep(50 + rand.nextInt(50))
+      if (rand.nextBoolean()) {
+        write(s" $i", space)
+        println(s"[A] ${myCRDT.asString}")
+      } else {
+        if (myCRDT.asString.nonEmpty) {
+          backspace(space)
+          println(s"[B] ${myCRDT.asString}")
+        }
+      }
     }
 
     //    while (true) {
@@ -87,16 +94,26 @@ object TextClient {
   class Listener(space: Space) extends Runnable {
     override def run(): Unit = {
       while (true) {
-        val (_, _, op) = space.getS(EVENT, myID, classOf[Inserted[String]])
-        myCRDT.applyInserted(op)
-        println(s"Got: ${myCRDT.asString}")
+        val (_, _, op) = space.getS(EVENT, myID, classOf[Operation[String]])
+        myCRDT.applyOperation(op)
+        println(s"[R] ${myCRDT.asString}")
       }
     }
   }
 
   def write(str: String, space: Space): Unit = {
-    val event = myCRDT.writeAtEnd(str)
-    println(s"Produced event: $event")
+    val event: Operation[String] = myCRDT.writeAtEnd(str)
+
+    // Notify others
+    val (_, clients) = space.queryS(CLIENTS, classOf[Array[String]])
+
+    clients.foreach(x => if (x != myID)
+      space.put(EVENT, x, event)
+    )
+  }
+
+  def backspace(space: Space): Unit = {
+    val event: Operation[String] = myCRDT.backspace()
 
     // Notify others
     val (_, clients) = space.queryS(CLIENTS, classOf[Array[String]])

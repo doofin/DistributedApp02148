@@ -4,7 +4,6 @@ import example.ScalaSpaces.{RunnableOps, SpaceOps}
 import example.exercises.Jakub.TextCommon.Event._
 import example.exercises.Jakub.TextCommon._
 import org.jspace._
-import scala.collection.mutable
 
 // Coordinates clients that work on some file
 object TextServer {

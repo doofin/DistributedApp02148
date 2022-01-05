@@ -18,17 +18,17 @@ object RGA_Test {
     printAlice()
 
     // Bob sees that alice wrote 'Hello'
-    bob.applyInserted(i1)
+    bob.applyOperation(i1)
     printBob()
     // Bob adds 'you' after 'Hello'
     val i3 = bob.writeAtEnd(" you")
     printBob()
     // Bob sees that Alice wrote 'world'
-    bob.applyInserted(i2)
+    bob.applyOperation(i2)
     printBob()
 
     // Alice sees that Bob wrote 'you'
-    alice.applyInserted(i3)
+    alice.applyOperation(i3)
     printAlice()
 
     // Bob writes 'bbb'
@@ -39,17 +39,17 @@ object RGA_Test {
     printBob()
 
     // Alice sees that Bob wrote 'bbb'
-    alice.applyInserted(i5)
+    alice.applyOperation(i5)
     printAlice()
     // and decides to add 'aaa'
     val i7 = alice.writeAtEnd(" aaa")
     printAlice()
     // and only after that she sees that Bob removed 'bbb'
-    alice.applyRemoved(i6)
+    alice.applyOperation(i6)
     printAlice()
 
     // Bob sees that Alice replied to 'bbb' before it was removed
-    bob.applyInserted(i7)
+    bob.applyOperation(i7)
     printAlice()
 
     println("END")
