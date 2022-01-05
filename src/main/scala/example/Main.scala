@@ -1,7 +1,10 @@
 package example
 
-import example.exercises.lec2_sort
+
+import example.exercises.Haraldexercises.lec5_petriNet
+
 
 object Main {
-  def main(args: Array[String]): Unit = lec2_sort.run
+  def main(args: Array[String]): Unit =
+    lec5_petriNet.run()
 }

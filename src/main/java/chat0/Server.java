@@ -32,7 +32,7 @@ public class Server {
 			String uri = input.readLine();
 			// Default value
 			if (uri.isEmpty()) { 
-				uri = "tcp://127.0.0.1:9001/?keep";
+				uri = "tcp://localhost:31145/?conn";
 			}
 
 			// Open a gate

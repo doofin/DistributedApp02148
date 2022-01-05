@@ -21,7 +21,7 @@ public class Client {
 			String uri = input.readLine();
 			// Default value
 			if (uri.isEmpty()) { 
-				uri = "tcp://127.0.0.1:9001/chat?keep";
+				uri = "tcp://localhost:31145/chat?conn";
 			}
 
 			// Connect to the remote chat space 
