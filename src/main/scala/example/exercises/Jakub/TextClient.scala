@@ -1,7 +1,6 @@
 package example.exercises.Jakub
 
 import example.ScalaSpaces.{RunnableOps, SpaceOps}
-import example.exercises.Jakub.RGA.Operations._
 import example.exercises.Jakub.RGA._
 import example.exercises.Jakub.TextCommon.Event._
 import example.exercises.Jakub.TextCommon._
@@ -73,10 +72,10 @@ object TextClient {
     for (i <- 1 to 30) {
       Thread.sleep(50 + rand.nextInt(50))
       if (rand.nextBoolean()) {
-        write(s" $i", space)
+        write(s"_$i", space)
         println(s"[A] ${myCRDT.asString}")
       } else {
-        if (myCRDT.asString.nonEmpty) {
+        if (myCRDT.vertices.nonEmpty) {
           backspace(space)
           println(s"[B] ${myCRDT.asString}")
         }
@@ -101,8 +100,10 @@ object TextClient {
     }
   }
 
-  def write(str: String, space: Space): Unit = {
-    val event: Operation[String] = myCRDT.writeAtEnd(str)
+  def write(str: String, space: Space): Unit = str.foreach(writeChar(_, space))
+
+  def writeChar(str: Char, space: Space): Unit = {
+    val event: Operation[String] = myCRDT.writeAtEnd(str.toString)
 
     // Notify others
     val (_, clients) = space.queryS(CLIENTS, classOf[Array[String]])

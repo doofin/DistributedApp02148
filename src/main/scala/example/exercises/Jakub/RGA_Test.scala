@@ -16,42 +16,50 @@ object RGA_Test {
     // Alice adds 'world' after 'Hello'
     val i2 = alice.writeAtEnd(" world")
     printAlice()
+    // Alice adds '!!!' after 'world'
+    val i21 = alice.writeAtEnd(" !!!")
+    printAlice()
 
     // Bob sees that alice wrote 'Hello'
     bob.applyOperation(i1)
     printBob()
-    // Bob adds 'you' after 'Hello'
-    val i3 = bob.writeAtEnd(" you")
+    // Bob adds 'there' after 'Hello'
+    val i3 = bob.writeAtEnd(" there")
     printBob()
     // Bob sees that Alice wrote 'world'
     bob.applyOperation(i2)
     printBob()
+    // Bob sees that Alice wrote '!!!!'
+    bob.applyOperation(i21)
+    printBob()
 
-    // Alice sees that Bob wrote 'you'
+    // Alice sees that Bob wrote 'there'
     alice.applyOperation(i3)
     printAlice()
 
-    // Bob writes 'bbb'
-    val i5 = bob.writeAtEnd(" bbb")
+    // Bob writes his name
+    val i5 = bob.writeAtEnd(" I am Bob")
     printBob()
     // but then deletes it
     val i6 = bob.backspace()
     printBob()
 
-    // Alice sees that Bob wrote 'bbb'
+    // Alice sees that Bob wrote his name
     alice.applyOperation(i5)
     printAlice()
-    // and decides to add 'aaa'
-    val i7 = alice.writeAtEnd(" aaa")
+    // and decides to add her name
+    val i7 = alice.writeAtEnd(" I am Alice")
     printAlice()
-    // and only after that she sees that Bob removed 'bbb'
+    // and only after that she sees that Bob removed his name
     alice.applyOperation(i6)
     printAlice()
 
-    // Bob sees that Alice replied to 'bbb' before it was removed
+    // Bob sees that Alice replied to his name before it was removed
     bob.applyOperation(i7)
-    printAlice()
+    printBob()
 
     println("END")
+    printAlice()
+    printBob()
   }
 }

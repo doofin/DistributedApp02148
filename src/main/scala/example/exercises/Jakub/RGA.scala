@@ -22,6 +22,8 @@ object RGA {
     case class Removed[A](ptr: Position) extends Operation[A]
   }
 
+  // TODO: Guard against concurrent access, otherwise this happens with `vertices`:
+  // Exception in thread "Thread-2" java.util.ConcurrentModificationException: mutation occurred during iteration
   class CRDT(site: SiteId) extends Document {
     type V = Vertex[String]
     val root: V = ((0, ""), None)
@@ -29,11 +31,13 @@ object RGA {
 
     var clock: Time = 0
 
+    private[this] def ptrLt(p1: VPtr, p2: VPtr): Boolean = p1._1 < p2._1 || p1._2 < p2._2
+
     def shift(offset: Int, ptr: VPtr): Int = {
       if (offset >= vertices.length) offset // append at the end
       else {
         val (successor, _) = vertices(offset)
-        if (successor._1 < ptr._1 || (successor._1 == ptr._1 && successor._2 < ptr._2))
+        if (ptrLt(successor, ptr))
           offset
         else shift(offset + 1, ptr) // move insertion point to the right
       }
@@ -46,7 +50,7 @@ object RGA {
       }
     }
 
-    private [this] def applyInserted(inserted: Inserted[String]): Unit = {
+    private[this] def applyInserted(inserted: Inserted[String]): Unit = {
       val Inserted(predecessor, ptr, value) = inserted
       // find index where predecessor vertex can be found
       val predecessorIdx = vertices.indexWhere(x => x._1 == predecessor)
@@ -58,7 +62,7 @@ object RGA {
       clock = math.max(ptr._1, clock)
     }
 
-    private [this] def applyRemoved(event: Removed[String]): Unit = {
+    private[this] def applyRemoved(event: Removed[String]): Unit = {
       val Removed(ptr) = event
       // find index where removed vertex can be found and tombstone it
       val index = vertices.indexWhere(x => x._1 == ptr)
@@ -67,14 +71,12 @@ object RGA {
     }
 
     def writeAtEnd(string: String): Inserted[String] = {
-      clock += 1
-      val event = Inserted(vertices.last._1, (clock, site), string)
+      val event = Inserted(vertices.last._1, (clock + 1, site), string)
       applyInserted(event)
       event
     }
 
     def backspace(): Removed[String] = {
-      clock += 1
       val event = Removed[String](vertices.last._1)
       applyRemoved(event)
       event
