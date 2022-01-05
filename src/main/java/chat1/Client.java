@@ -5,13 +5,11 @@ import org.jspace.FormalField;
 import org.jspace.RemoteSpace;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.UnknownHostException;
 
 public class Client {
 
-	public static void main(String[] args) {
+	public static RemoteSpace main(String[] args) {
 
 		try {
 
@@ -40,23 +38,23 @@ public class Client {
 		    System.out.println("Connecting to chat space " + chatroom_uri);
 			RemoteSpace chatroom_space = new RemoteSpace(chatroom_uri);
 
+
 			// Keep sending whatever the user types
 			System.out.println("Start chatting...");
+
+			return chatroom_space;
+/*
 			while(true) {
 				String message = input.readLine();
 				chatroom_space.put(name, message);
 			}			
+*/
 
 
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return null;
 	}
 }
