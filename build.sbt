@@ -10,7 +10,7 @@ lazy val root = (project in file("."))
     name := "DistributedApp",
     libraryDependencies ++= Seq(
       "com.github.pSpaces" % "jSpace" % "9ff32b60f1",
-      "com.lihaoyi" %% "pprint" % "0.5.9",
+      "com.lihaoyi" %% "pprint" % "0.7.1",
     )
   )
 
