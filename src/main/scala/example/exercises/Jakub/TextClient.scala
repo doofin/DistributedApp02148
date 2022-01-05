@@ -1,6 +1,7 @@
 package example.exercises.Jakub
 
 import example.ScalaSpaces.{RunnableOps, SpaceOps}
+import example.exercises.Jakub.RGA.Operations._
 import example.exercises.Jakub.RGA._
 import example.exercises.Jakub.TextCommon.Event._
 import example.exercises.Jakub.TextCommon._
@@ -69,15 +70,15 @@ object TextClient {
 
     val rand = new Random()
 
-    for (i <- 1 to 30) {
-      Thread.sleep(50 + rand.nextInt(50))
+    for (i <- 1 to 20) {
+      Thread.sleep(500 + rand.nextInt(500))
       if (rand.nextBoolean()) {
-        write(s"_$i", space)
-        println(s"[A] ${myCRDT.asString}")
+        write(s"$i", space)
+        println(s"[A ] ${myCRDT.asString}")
       } else {
         if (myCRDT.vertices.nonEmpty) {
           backspace(space)
-          println(s"[B] ${myCRDT.asString}")
+          println(s"[B ] ${myCRDT.asString}")
         }
       }
     }
@@ -95,7 +96,11 @@ object TextClient {
       while (true) {
         val (_, _, op) = space.getS(EVENT, myID, classOf[Operation[String]])
         myCRDT.applyOperation(op)
-        println(s"[R] ${myCRDT.asString}")
+        val t = op match {
+          case _: Inserted[_] => "A"
+          case _: Removed[_] => "B"
+        }
+        println(s"[R$t] ${myCRDT.asString}")
       }
     }
   }
@@ -107,6 +112,10 @@ object TextClient {
 
     // Notify others
     val (_, clients) = space.queryS(CLIENTS, classOf[Array[String]])
+
+    // TODO: Save every event with some global tag, so that everyone who joins late
+    // can replay the previous, unseen, messages
+    //    space.put(EVENT, "history", event)
 
     clients.foreach(x => if (x != myID)
       space.put(EVENT, x, event)
@@ -124,6 +133,4 @@ object TextClient {
     )
   }
 
-  //region RemoteDocument
-  //endregion
 }

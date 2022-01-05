@@ -8,23 +8,21 @@ import scala.collection.mutable
 // https://bartoszsypytkowski.com/operation-based-crdts-arrays-1/
 object RGA {
   type Time = Integer
-  type SiteId = String
-  type VPtr = (Time, SiteId)
+  type ClientID = String
+  type VPtr = (Time, ClientID)
   type Vertex[A] = (VPtr, Option[A])
 
   trait Operation[A]
 
   object Operations {
-    type Position = VPtr
-
     case class Inserted[A](predecessor: VPtr, ptr: VPtr, value: A) extends Operation[A]
 
-    case class Removed[A](ptr: Position) extends Operation[A]
+    case class Removed[A](ptr: VPtr) extends Operation[A]
   }
 
   // TODO: Guard against concurrent access, otherwise this happens with `vertices`:
   // Exception in thread "Thread-2" java.util.ConcurrentModificationException: mutation occurred during iteration
-  class CRDT(site: SiteId) extends Document {
+  class CRDT(site: ClientID) extends Document {
     type V = Vertex[String]
     val root: V = ((0, ""), None)
     var vertices: mutable.ArrayBuffer[V] = mutable.ArrayBuffer(root)
@@ -77,9 +75,18 @@ object RGA {
     }
 
     def backspace(): Removed[String] = {
-      val event = Removed[String](vertices.last._1)
-      applyRemoved(event)
-      event
+      val maybeLast = vertices.findLast(_._2.isDefined)
+
+      maybeLast match {
+        case None =>
+          // nothing more to delete, this is a no-op:
+          Removed[String](vertices.last._1)
+        case Some((lastPtr, _)) =>
+          // mark the last visible (Some(_)) character as removed
+          val event = Removed[String](lastPtr)
+          applyRemoved(event)
+          event
+      }
     }
 
     def asString: String = vertices.map(x => x._2.getOrElse("")).mkString("")
