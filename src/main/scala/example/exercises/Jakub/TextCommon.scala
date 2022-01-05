@@ -1,7 +1,5 @@
 package example.exercises.Jakub
 
-import org.w3c.dom.Document
-
 object TextCommon {
   val baseURL: String = spaceURL("");
 
@@ -14,16 +12,11 @@ object TextCommon {
     val JOIN_SESSION: String = "join"
     val SESSION: String = "session"
     val INVALID_SESSION: String = "invalid"
-    val DOCUMENT: String = "document_init"
+    val EVENT: String = "event"
+    val CLIENTS: String = "clients"
   }
 
-  trait Document[T] {
-    def getContents(t: T): String
-  }
-
-  object Documents {
-    implicit object stringDocument extends Document[String] {
-      override def getContents(s: String): String = s
-    }
+  trait Document {
+    def asString: String
   }
 }

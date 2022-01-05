@@ -1,18 +1,18 @@
 package example.exercises.Jakub
 
-import example.ScalaSpaces.SpaceOps
-import example.exercises.Jakub.TextCommon.Documents._
+import example.ScalaSpaces.{RunnableOps, SpaceOps}
+import example.exercises.Jakub.RGA.Operations._
+import example.exercises.Jakub.RGA._
 import example.exercises.Jakub.TextCommon.Event._
 import example.exercises.Jakub.TextCommon._
-import net.team2xh.scurses._
 import org.jspace._
 
 import scala.io.StdIn.readLine
 import scala.util.Random
-import scala.util.control.Breaks._
 
 object TextClient {
   def main(args: Array[String]): Unit = {
+    println(s"You are $myID")
     println("COMMANDS: Either 'init' or 'join'")
     print(">> ")
     val command = readLine()
@@ -27,7 +27,8 @@ object TextClient {
   }
 
   val joinSpace = new RemoteSpace(spaceURL(JOIN_SPACE_ID))
-  val myID = s"client-${Random.nextInt(100)}"
+  val myID = s"client-${Random.nextInt(1000)}"
+  val myCRDT = new CRDT(myID)
 
   def initializeSession(): Unit = {
     // Ask for a new collaboration session
@@ -39,45 +40,72 @@ object TextClient {
 
     // Send initial document state
     val sessionSpace = new RemoteSpace(spaceURL(sessionID))
-    var document = "An example text document."
-    sessionSpace.put(DOCUMENT, document)
+
+    println("Waiting for input...")
+    readLine() // TODO
+
+    write("Initial state. ", sessionSpace)
 
     // Start inline editor
-    workOn(document)
+    workOn(sessionSpace)
   }
 
   def joinSession(sessionID: String): Unit = {
     // Try to join the session
     joinSpace.put(JOIN_SESSION, myID, sessionID)
-    val (event, _, _) = joinSpace.getS(classOf[String], myID, sessionID)
-    event match {
-      case INVALID_SESSION => return
-      case SESSION =>
-    }
-
-    val sessionSpace = new RemoteSpace(spaceURL(sessionID))
+    joinSpace.getS(SESSION, myID, sessionID) // TODO: INVALID_SESSION
 
     // Start working on remote document
-    workOn(new RemoteDocument(sessionSpace))(remoteDocument) // TODO: how do I make the implicit work here?
+    val sessionSpace = new RemoteSpace(spaceURL(sessionID))
+
+    println("Waiting for input...")
+    readLine() // TODO
+
+    workOn(sessionSpace)
   }
 
-  def workOn[T](document: T)(implicit doc: Document[T]): Unit = {
-    val contents = doc.getContents(document)
-    println(contents)
+  def workOn(space: Space): Unit = {
+    new Listener(space).spawn()
+    println(myCRDT.asString)
+
+    val rand = new Random()
+
+    for (i <- 1 to 10) {
+      Thread.sleep(500 + rand.nextInt(500))
+      write(s" ${myID.last}_[$i]", space)
+      println(s"State: ${myCRDT.asString}")
+    }
+
+    //    while (true) {
+    //      print(">> ")
+    //      val input = readLine()
+    //      write(input, space)
+    //      println(myCRDT.asString)
+    //    }
+  }
+
+  class Listener(space: Space) extends Runnable {
+    override def run(): Unit = {
+      while (true) {
+        val (_, _, op) = space.getS(EVENT, myID, classOf[Inserted[String]])
+        myCRDT.applyInserted(op)
+        println(s"Got: ${myCRDT.asString}")
+      }
+    }
+  }
+
+  def write(str: String, space: Space): Unit = {
+    val event = myCRDT.writeAtEnd(str)
+    println(s"Produced event: $event")
+
+    // Notify others
+    val (_, clients) = space.queryS(CLIENTS, classOf[Array[String]])
+
+    clients.foreach(x => if (x != myID)
+      space.put(EVENT, x, event)
+    )
   }
 
   //region RemoteDocument
-
-  class RemoteDocument(space: RemoteSpace) {
-    val _space: RemoteSpace = space
-  }
-
-  implicit object remoteDocument extends Document[RemoteDocument] {
-    override def getContents(t: RemoteDocument): String = {
-      val (_, document) = t._space.queryS(DOCUMENT, classOf[String])
-      document
-    }
-  }
-
   //endregion
 }
