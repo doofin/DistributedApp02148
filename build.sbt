@@ -5,12 +5,25 @@ ThisBuild / organizationName := "example"
 
 resolvers += "jitpack" at "https://jitpack.io"
 
+lazy val osName = System.getProperty("os.name") match {
+  case n if n.startsWith("Linux")   => "linux"
+  case n if n.startsWith("Mac")     => "mac"
+  case n if n.startsWith("Windows") => "win"
+  case _                            => throw new Exception("Unknown platform!")
+}
+
+// Add dependency on JavaFX libraries, OS dependent
+lazy val javaFXModules =
+  Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
+
 lazy val root = (project in file("."))
   .settings(
     name := "DistributedApp",
     libraryDependencies ++= Seq(
       "com.github.pSpaces" % "jSpace" % "9ff32b60f1",
       "com.lihaoyi" %% "pprint" % "0.7.1",
+      "org.fxmisc.richtext" % "richtextfx" % "0.10.7" // https://mvnrepository.com/artifact/org.openjfx/javafx
+    ) ++ javaFXModules.map(
+      m => "org.openjfx" % s"javafx-$m" % "16" classifier osName
     )
   )
-
