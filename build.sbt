@@ -22,8 +22,10 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       "com.github.pSpaces" % "jSpace" % "9ff32b60f1",
       "com.lihaoyi" %% "pprint" % "0.7.1",
-      "org.fxmisc.richtext" % "richtextfx" % "0.10.7" // https://mvnrepository.com/artifact/org.openjfx/javafx
+      "org.fxmisc.richtext" % "richtextfx" % "0.10.7",
+      "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
     ) ++ javaFXModules.map(
+//       https://mvnrepository.com/artifact/org.openjfx/javafx
       m => "org.openjfx" % s"javafx-$m" % "18-ea+9" classifier osName //"16"
     )
   )
