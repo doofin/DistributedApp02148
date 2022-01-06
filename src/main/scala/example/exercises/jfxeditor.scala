@@ -8,6 +8,8 @@ import javafx.scene.{Parent, Scene}
 import javafx.stage.{Stage, WindowEvent}
 import lib.EditorUtils
 
+//https://github.com/Fibii/Fedator/blob/master/pom.xml
+
 object jfxeditor extends MainRunnable {
   override def main(args: Array[String]): Unit = {
     Application.launch(classOf[jfxeditor], "")

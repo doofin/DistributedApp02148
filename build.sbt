@@ -24,6 +24,6 @@ lazy val root = (project in file("."))
       "com.lihaoyi" %% "pprint" % "0.7.1",
       "org.fxmisc.richtext" % "richtextfx" % "0.10.7" // https://mvnrepository.com/artifact/org.openjfx/javafx
     ) ++ javaFXModules.map(
-      m => "org.openjfx" % s"javafx-$m" % "16" classifier osName
+      m => "org.openjfx" % s"javafx-$m" % "18-ea+9" classifier osName //"16"
     )
   )
