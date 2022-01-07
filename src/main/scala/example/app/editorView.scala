@@ -167,7 +167,6 @@ object editorView {
     //Adding menu items to menu bar
     jMenuBar.add(m1)
     jMenuBar.add(m2)
-    jMenuBar.add(m3)
     jMenuBar.add(m4)
     jMenuBar.add(mc)
     //Setting menubar on the frame

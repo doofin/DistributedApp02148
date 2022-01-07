@@ -5,6 +5,18 @@ ThisBuild / organizationName := "example"
 
 resolvers += "jitpack" at "https://jitpack.io"
 
+lazy val root = (project in file("."))
+  .settings(
+    name := "DistributedApp",
+    libraryDependencies ++= Seq(
+      "com.github.pSpaces" % "jSpace" % "9ff32b60f1",
+      "com.lihaoyi" %% "pprint" % "0.7.1",
+//      "org.fxmisc.richtext" % "richtextfx" % "0.10.7",
+      "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
+      "com.formdev" % "flatlaf" % "2.0-rc1"
+    )
+  )
+/*
 lazy val osName = System.getProperty("os.name") match {
   case n if n.startsWith("Linux")   => "linux"
   case n if n.startsWith("Mac")     => "mac"
@@ -16,17 +28,8 @@ lazy val osName = System.getProperty("os.name") match {
 lazy val javaFXModules =
   Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
 
-lazy val root = (project in file("."))
-  .settings(
-    name := "DistributedApp",
-    libraryDependencies ++= Seq(
-      "com.github.pSpaces" % "jSpace" % "9ff32b60f1",
-      "com.lihaoyi" %% "pprint" % "0.7.1",
-      "org.fxmisc.richtext" % "richtextfx" % "0.10.7",
-      "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
-      "com.formdev" % "flatlaf" % "2.0-rc1"
-    ) ++ javaFXModules.map(
+++ javaFXModules.map(
 //       https://mvnrepository.com/artifact/org.openjfx/javafx
       m => "org.openjfx" % s"javafx-$m" % "18-ea+9" classifier osName //"16"
     )
-  )
+ * */
