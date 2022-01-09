@@ -11,6 +11,7 @@ import javax.swing.JScrollPane
 import javax.swing.JTextArea
 import java.awt.BorderLayout
 import javax.swing.event.{DocumentEvent, DocumentListener}
+import javax.swing.text.{AbstractDocument, AttributeSet, DocumentFilter}
 
 object Editor {
   def main(args: Array[String]): Unit = new Editor
@@ -18,13 +19,12 @@ object Editor {
 
 class Editor extends JFrame("Group 5 – Collaborative Text Editor") with ActionListener with AdjustmentListener {
   // region Constructor
-  val client = new Client
-
   setSize(500, 500)
   setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
   setLayout(new BorderLayout)
 
-  val textArea = new JTextArea
+  val client = new Client(updateText)
+  val textArea = new JTextArea()
   textArea.setFont(new Font("SansSerif", Font.PLAIN, 16))
 
   val scroll = new JScrollPane(textArea)
@@ -49,10 +49,17 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
 
   // region handlers
 
+  private val doc = textArea.getDocument.asInstanceOf[AbstractDocument]
+  doc.setDocumentFilter(new DocumentInsertionFilter(client))
+
   textArea.getDocument.addDocumentListener(new DocumentChangeListener(client))
 
   // endregion
   // region Methods
+
+  private def updateText(txt: String): Unit = {
+    textArea.setText(s"[CRDT]$txt")
+  }
 
   override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {}
 
@@ -153,14 +160,10 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
 
 class DocumentChangeListener(client: Client) extends DocumentListener {
   def insertUpdate(e: DocumentEvent): Unit = {
-    val text = e.getDocument.getText(e.getOffset, e.getLength)
-    for (c <- text.reverse) client.writeChar(e.getOffset, c)
     logChange(e, "inserted into")
   }
 
   def removeUpdate(e: DocumentEvent): Unit = {
-    val indices = (e.getOffset until e.getOffset + e.getLength).reverse
-    for (ix <- indices) client.deleteAt(ix + 1)
     logChange(e, "removed from")
   }
 
@@ -172,5 +175,22 @@ class DocumentChangeListener(client: Client) extends DocumentListener {
     val changeLength = e.getLength
     println(s"$changeLength character${if (changeLength == 1) " " else "s "}$action document at (${e.getOffset})")
     println(s"CRDT: ${client.crdt.asString}")
+  }
+}
+
+class DocumentInsertionFilter(client: Client) extends DocumentFilter {
+  override def replace(fb: DocumentFilter.FilterBypass, offset: Int, length: Int, text: String, attrs: AttributeSet): Unit = {
+    if (text.startsWith("[CRDT]")) {
+      super.replace(fb, offset, length, text.drop(6), attrs)
+    } else {
+      super.replace(fb, offset, length, text, attrs)
+      for (c <- text.reverse) client.writeChar(offset, c)
+    }
+  }
+
+  override def remove(fb: DocumentFilter.FilterBypass, offset: Int, length: Int): Unit = {
+    val indices = (offset until offset + length).reverse
+    for (ix <- indices) client.deleteAt(ix + 1)
+    super.remove(fb, offset, length)
   }
 }

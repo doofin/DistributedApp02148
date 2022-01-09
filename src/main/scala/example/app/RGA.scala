@@ -2,7 +2,6 @@ package example.app
 
 import example.app.CRDT.Operations._
 import example.app.CRDT._
-import example.app.Common.Document
 
 import scala.collection.mutable
 
@@ -24,7 +23,7 @@ object CRDT {
 
 // TODO: Guard against concurrent access, otherwise this happens with `vertices`:
 // Exception in thread "Thread-2" java.util.ConcurrentModificationException: mutation occurred during iteration
-class CRDT(site: ClientID) extends Document {
+class CRDT(site: ClientID) {
   type V = Vertex[String]
   val root: V = ((0, ""), None)
   var vertices: mutable.ArrayBuffer[V] = mutable.ArrayBuffer(root)

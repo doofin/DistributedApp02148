@@ -15,8 +15,4 @@ object Common {
     val EVENT: String = "event"
     val CLIENTS: String = "clients"
   }
-
-  trait Document {
-    def asString: String
-  }
 }

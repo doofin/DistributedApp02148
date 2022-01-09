@@ -9,12 +9,9 @@ import org.jspace._
 
 import scala.util.Random
 
-class Client() {
-  type KeyTypedHandler = Char => Unit
-  type BackspaceHandler = Int => Unit
-
+class Client(onUpdate: String => Unit) {
   val lobby = new RemoteSpace(spaceURL(JOIN_SPACE_ID))
-  val clientID = s"client-${Random.nextInt(1000)}"
+  val clientID = Random.nextInt(1000).toString
   val crdt = new CRDT(clientID)
   var room: Option[Space] = None
 
@@ -56,11 +53,7 @@ class Client() {
       while (true) {
         val (_, _, op) = space.getS(EVENT, clientID, classOf[Operation[String]])
         crdt.applyOperation(op)
-        val t = op match {
-          case _: Inserted[_] => "A"
-          case _: Removed[_] => "B"
-        }
-        println(s"[R$t] ${crdt.asString}")
+        onUpdate(crdt.asString)
       }
     }
   }
