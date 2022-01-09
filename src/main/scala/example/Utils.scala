@@ -8,12 +8,4 @@ object Utils {
     f
     (nanoTime - t1) / 1e9d
   }
-
-  trait MainRunnable {
-    def main(args: Array[String]): Unit
-  }
-
-  trait JustRunnable {
-    def run(): Unit
-  }
 }

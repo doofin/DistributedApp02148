@@ -1,10 +1,7 @@
 package example
 
-
-import example.exercises.Haraldexercises.lec5_petriNet
-
+import example.app.Editor
 
 object Main {
-  def main(args: Array[String]): Unit =
-    lec5_petriNet.run()
+  def main(args: Array[String]): Unit = new Editor
 }
