@@ -1,4 +1,4 @@
-package example.exercises.Jakub
+package example.app
 
 import example.ScalaSpaces.{RunnableOps, SpaceOps}
 import example.exercises.Jakub.RGA.Operations._
@@ -7,88 +7,42 @@ import example.exercises.Jakub.TextCommon.Event._
 import example.exercises.Jakub.TextCommon._
 import org.jspace._
 
-import scala.io.StdIn.readLine
 import scala.util.Random
 
-object TextClient {
-  def main(args: Array[String]): Unit = {
-    println(s"You are $myID")
-    println("COMMANDS: Either 'init' or 'join'")
-    print(">> ")
-    val command = readLine()
-    command match {
-      case "init" => initializeSession()
-      case "join" =>
-        print("Enter session ID: ")
-        val sessionID = readLine()
-        joinSession(sessionID)
-      case _ => println(s"Invalid command '$command")
-    }
-  }
-
+class Client {
   val joinSpace = new RemoteSpace(spaceURL(JOIN_SPACE_ID))
   val myID = s"client-${Random.nextInt(1000)}"
   val myCRDT = new CRDT(myID)
 
-  def initializeSession(): Unit = {
+  def initializeSession(): String = {
     // Ask for a new collaboration session
     joinSpace.put(START_SESSION, myID)
 
     // Receive session ID
-    val (_, _, sessionID) = joinSpace.getS(SESSION, myID, classOf[String])
+    val sessionID = joinSpace.getS(SESSION, myID, classOf[String])._3
     println(s"Started a session: $sessionID")
 
-    // Send initial document state
+    // Create remote space
     val sessionSpace = new RemoteSpace(spaceURL(sessionID))
 
-    println("Waiting for input...")
-    readLine() // TODO
+    // Spawn event listener
+    new Listener(sessionSpace).spawn()
 
-    write("000", sessionSpace)
-
-    // Start inline editor
-    workOn(sessionSpace)
+    // Return session ID
+    sessionID
   }
 
   def joinSession(sessionID: String): Unit = {
     // Try to join the session
     joinSpace.put(JOIN_SESSION, myID, sessionID)
     joinSpace.getS(SESSION, myID, sessionID) // TODO: INVALID_SESSION
+    println(s"Joined a session: $sessionID")
 
-    // Start working on remote document
+    // Create remote space
     val sessionSpace = new RemoteSpace(spaceURL(sessionID))
 
-    println("Waiting for input...")
-    readLine() // TODO
-
-    workOn(sessionSpace)
-  }
-
-  def workOn(space: Space): Unit = {
-    new Listener(space).spawn()
-    println(myCRDT.asString)
-
-    val rand = new Random()
-
-    for (i <- 1 to 20) {
-      Thread.sleep(500 + rand.nextInt(500))
-      if (rand.nextBoolean()) {
-        write(s"$i", space)
-        println(s"[A ] ${myCRDT.asString}")
-      } else {
-        if (myCRDT.vertices.nonEmpty) {
-          backspace(space)
-          println(s"[B ] ${myCRDT.asString}")
-        }
-      }
-    }
-
-    //    while (true) {
-    //      print(">> ")
-    //      val input = readLine()
-    //      write(input, space)
-    //      println(myCRDT.asString)
-    //    }
+    // Spawn event listener
+    new Listener(sessionSpace).spawn()
   }
 
   class Listener(space: Space) extends Runnable {
@@ -132,5 +86,4 @@ object TextClient {
       space.put(EVENT, x, event)
     )
   }
-
 }

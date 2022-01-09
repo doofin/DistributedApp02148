@@ -12,10 +12,17 @@ import javax.swing.JTextArea
 import java.awt.BorderLayout
 import javax.swing.event.{CaretEvent, CaretListener}
 
+object Editor {
+  def main(args: Array[String]): Unit = new Editor
+}
+
 class Editor extends JFrame("Group 5 – Collaborative Text Editor") with ActionListener with AdjustmentListener {
   // region Constructor
+  val client = new Client
+
   setSize(500, 500)
   setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
+  setLayout(new BorderLayout)
 
   val textArea = new JTextArea
   textArea.setFont(new Font("SansSerif", Font.PLAIN, 16))
@@ -27,11 +34,15 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
   val panel = new JPanel
   panel.setLayout(new BorderLayout)
   panel.add(scroll, BorderLayout.CENTER)
-  add(panel)
+  add(panel, BorderLayout.CENTER)
 
   val jMenuBar = new JMenuBar
   addToMenus(jMenuBar)
   setJMenuBar(jMenuBar)
+
+  val statusBar = new JLabel(" Disconnected")
+  statusBar.setFont(new Font(Font.DIALOG_INPUT, Font.BOLD, 15))
+  add(statusBar, BorderLayout.SOUTH)
 
   setVisible(true)
   // endregion
@@ -43,9 +54,9 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
 
   textArea.addCaretListener(new CaretListener() {
     override def caretUpdate(e: CaretEvent): Unit = {
-      val caretpos = textArea.getCaretPosition
-      caretY = textArea.getLineOfOffset(caretpos)
-      caretX = caretpos - textArea.getLineStartOffset(caretY)
+      val caretPos = textArea.getCaretPosition
+      caretY = textArea.getLineOfOffset(caretPos)
+      caretX = caretPos - textArea.getLineStartOffset(caretY)
     }
   })
 
@@ -58,15 +69,18 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
   // endregion
   // region Methods
 
-  def moveCursorTo() = ???
-
-  def insertAt() = ???
-
   override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {}
 
   override def actionPerformed(ae: ActionEvent): Unit = {
     ae.getActionCommand match {
-      case "New" => textArea.setText("")
+      case "New session" =>
+        val sessionID = client.initializeSession()
+        JOptionPane.showMessageDialog(null, s"Session ID: $sessionID", "Info", JOptionPane.INFORMATION_MESSAGE)
+        statusBar.setText(s" Connected: $sessionID") // TODO: Handle failure
+      case "Join session" =>
+        val sessionID = JOptionPane.showInputDialog("Session ID:")
+        client.joinSession(sessionID)
+        statusBar.setText(s" Connected: $sessionID") // TODO: Handle failure
       case "Copy" => textArea.copy()
       case "Cut" => textArea.cut()
       case "Paste" => textArea.paste()
@@ -113,15 +127,18 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
   private def addToMenus(jMenuBar: JMenuBar): Component = {
     // File menu
     val m1 = new JMenu("File")
-    val m1a = new JMenuItem("New")
-    val m1b = new JMenuItem("Open")
-    val m1c = new JMenuItem("Save")
+    val m1a = new JMenuItem("New session")
+    val m1b = new JMenuItem("Join session")
+    val m1c = new JMenuItem("Open")
+    val m1d = new JMenuItem("Save")
     m1a.addActionListener(this)
     m1b.addActionListener(this)
     m1c.addActionListener(this)
+    m1d.addActionListener(this)
     m1.add(m1a)
     m1.add(m1b)
     m1.add(m1c)
+    m1.add(m1d)
 
     // Edit menu
     val m2 = new JMenu("Edit")
