@@ -10,7 +10,7 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
 import java.awt.BorderLayout
-import javax.swing.event.{CaretEvent, CaretListener}
+import javax.swing.event.{DocumentEvent, DocumentListener}
 
 object Editor {
   def main(args: Array[String]): Unit = new Editor
@@ -49,22 +49,7 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
 
   // region handlers
 
-  var caretX = 0
-  var caretY = 0
-
-  textArea.addCaretListener(new CaretListener() {
-    override def caretUpdate(e: CaretEvent): Unit = {
-      val caretPos = textArea.getCaretPosition
-      caretY = textArea.getLineOfOffset(caretPos)
-      caretX = caretPos - textArea.getLineStartOffset(caretY)
-    }
-  })
-
-  textArea.addKeyListener(new KeyAdapter() {
-    override def keyTyped(e: KeyEvent): Unit = {
-      println(s"Pressed: ${e.getKeyChar} at ($caretX, $caretY)")
-    }
-  })
+  textArea.getDocument.addDocumentListener(new DocumentChangeListener(client))
 
   // endregion
   // region Methods
@@ -164,4 +149,28 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
   }
 
   // endregion
+}
+
+class DocumentChangeListener(client: Client) extends DocumentListener {
+  def insertUpdate(e: DocumentEvent): Unit = {
+    val text = e.getDocument.getText(e.getOffset, e.getLength)
+    for (c <- text.reverse) client.writeChar(e.getOffset, c)
+    logChange(e, "inserted into")
+  }
+
+  def removeUpdate(e: DocumentEvent): Unit = {
+    val indices = (e.getOffset until e.getOffset + e.getLength).reverse
+    for (ix <- indices) client.deleteAt(ix + 1)
+    logChange(e, "removed from")
+  }
+
+  def changedUpdate(e: DocumentEvent): Unit = {
+    // Plain text components do not fire these events
+  }
+
+  def logChange(e: DocumentEvent, action: String): Unit = {
+    val changeLength = e.getLength
+    println(s"$changeLength character${if (changeLength == 1) " " else "s "}$action document at (${e.getOffset})")
+    println(s"CRDT: ${client.crdt.asString}")
+  }
 }

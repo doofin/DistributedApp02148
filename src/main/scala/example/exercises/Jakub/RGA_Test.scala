@@ -1,6 +1,6 @@
 package example.exercises.Jakub
 
-import example.exercises.Jakub.RGA._
+import example.app.CRDT
 
 object RGA_Test {
   def main(args: Array[String]): Unit = {
@@ -41,7 +41,7 @@ object RGA_Test {
     val i5 = bob.writeAtEnd(" I am Bob")
     printBob()
     // but then deletes it
-    val i6 = bob.backspace()
+    val i6 = bob.deleteLast()
     printBob()
 
     // Alice sees that Bob wrote his name

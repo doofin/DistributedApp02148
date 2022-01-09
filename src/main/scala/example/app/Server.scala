@@ -1,8 +1,8 @@
 package example.app
 
 import example.ScalaSpaces.{RunnableOps, SpaceOps}
-import example.exercises.Jakub.TextCommon.Event._
-import example.exercises.Jakub.TextCommon._
+import Common.Event._
+import Common._
 import org.jspace._
 
 // Coordinates clients that work on some file

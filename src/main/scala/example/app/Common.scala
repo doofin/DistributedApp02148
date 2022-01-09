@@ -1,6 +1,6 @@
-package example.exercises.Jakub
+package example.app
 
-object TextCommon {
+object Common {
   val baseURL: String = spaceURL("");
 
   val JOIN_SPACE_ID = "joinSpace"

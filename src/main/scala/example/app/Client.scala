@@ -1,32 +1,37 @@
 package example.app
 
 import example.ScalaSpaces.{RunnableOps, SpaceOps}
-import example.exercises.Jakub.RGA.Operations._
-import example.exercises.Jakub.RGA._
-import example.exercises.Jakub.TextCommon.Event._
-import example.exercises.Jakub.TextCommon._
+import Common.Event._
+import Common._
+import example.app.CRDT.Operations._
+import example.app.CRDT._
 import org.jspace._
 
 import scala.util.Random
 
-class Client {
-  val joinSpace = new RemoteSpace(spaceURL(JOIN_SPACE_ID))
-  val myID = s"client-${Random.nextInt(1000)}"
-  val myCRDT = new CRDT(myID)
+class Client() {
+  type KeyTypedHandler = Char => Unit
+  type BackspaceHandler = Int => Unit
+
+  val lobby = new RemoteSpace(spaceURL(JOIN_SPACE_ID))
+  val clientID = s"client-${Random.nextInt(1000)}"
+  val crdt = new CRDT(clientID)
+  var room: Option[Space] = None
 
   def initializeSession(): String = {
     // Ask for a new collaboration session
-    joinSpace.put(START_SESSION, myID)
+    lobby.put(START_SESSION, clientID)
 
     // Receive session ID
-    val sessionID = joinSpace.getS(SESSION, myID, classOf[String])._3
+    val sessionID = lobby.getS(SESSION, clientID, classOf[String])._3
     println(s"Started a session: $sessionID")
 
     // Create remote space
-    val sessionSpace = new RemoteSpace(spaceURL(sessionID))
+    val space = new RemoteSpace(spaceURL(sessionID))
+    room = Some(space)
 
     // Spawn event listener
-    new Listener(sessionSpace).spawn()
+    new Listener(space).spawn()
 
     // Return session ID
     sessionID
@@ -34,12 +39,13 @@ class Client {
 
   def joinSession(sessionID: String): Unit = {
     // Try to join the session
-    joinSpace.put(JOIN_SESSION, myID, sessionID)
-    joinSpace.getS(SESSION, myID, sessionID) // TODO: INVALID_SESSION
+    lobby.put(JOIN_SESSION, clientID, sessionID)
+    lobby.getS(SESSION, clientID, sessionID) // TODO: INVALID_SESSION
     println(s"Joined a session: $sessionID")
 
     // Create remote space
     val sessionSpace = new RemoteSpace(spaceURL(sessionID))
+    room = Some(sessionSpace)
 
     // Spawn event listener
     new Listener(sessionSpace).spawn()
@@ -48,42 +54,34 @@ class Client {
   class Listener(space: Space) extends Runnable {
     override def run(): Unit = {
       while (true) {
-        val (_, _, op) = space.getS(EVENT, myID, classOf[Operation[String]])
-        myCRDT.applyOperation(op)
+        val (_, _, op) = space.getS(EVENT, clientID, classOf[Operation[String]])
+        crdt.applyOperation(op)
         val t = op match {
           case _: Inserted[_] => "A"
           case _: Removed[_] => "B"
         }
-        println(s"[R$t] ${myCRDT.asString}")
+        println(s"[R$t] ${crdt.asString}")
       }
     }
   }
 
-  def write(str: String, space: Space): Unit = str.foreach(writeChar(_, space))
+  def writeChar(current: Int, str: Char): Unit = notify(crdt.writeAfter(current, str.toString))
 
-  def writeChar(str: Char, space: Space): Unit = {
-    val event: Operation[String] = myCRDT.writeAtEnd(str.toString)
+  def deleteAt(at: Int): Unit = notify(crdt.deleteAt(at))
 
-    // Notify others
-    val (_, clients) = space.queryS(CLIENTS, classOf[Array[String]])
+  private def notify(event: Operation[String]): Unit = {
+    room match {
+      case None =>
+      case Some(space) =>
+        val (_, clients) = space.queryS(CLIENTS, classOf[Array[String]])
 
-    // TODO: Save every event with some global tag, so that everyone who joins late
-    // can replay the previous, unseen, messages
-    //    space.put(EVENT, "history", event)
+        // TODO: Save every event with some global tag, so that everyone who joins late
+        // can replay the previous, unseen, messages
+        // space.put(EVENT, "history", event)
 
-    clients.foreach(x => if (x != myID)
-      space.put(EVENT, x, event)
-    )
-  }
-
-  def backspace(space: Space): Unit = {
-    val event: Operation[String] = myCRDT.backspace()
-
-    // Notify others
-    val (_, clients) = space.queryS(CLIENTS, classOf[Array[String]])
-
-    clients.foreach(x => if (x != myID)
-      space.put(EVENT, x, event)
-    )
+        clients.foreach(x => if (x != clientID)
+          space.put(EVENT, x, event)
+        )
+    }
   }
 }
