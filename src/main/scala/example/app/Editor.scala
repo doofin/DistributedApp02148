@@ -10,6 +10,7 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
 import java.awt.BorderLayout
+import javax.swing.event.{CaretEvent, CaretListener}
 
 class Editor extends JFrame("Group 5 – Collaborative Text Editor") with ActionListener with AdjustmentListener {
   // region Constructor
@@ -33,6 +34,26 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
   setJMenuBar(jMenuBar)
 
   setVisible(true)
+  // endregion
+
+  // region handlers
+
+  var caretX = 0
+  var caretY = 0
+
+  textArea.addCaretListener(new CaretListener() {
+    override def caretUpdate(e: CaretEvent): Unit = {
+      val caretpos = textArea.getCaretPosition
+      caretY = textArea.getLineOfOffset(caretpos)
+      caretX = caretpos - textArea.getLineStartOffset(caretY)
+    }
+  })
+
+  textArea.addKeyListener(new KeyAdapter() {
+    override def keyTyped(e: KeyEvent): Unit = {
+      println(s"Pressed: ${e.getKeyChar} at ($caretX, $caretY)")
+    }
+  })
 
   // endregion
   // region Methods
@@ -124,5 +145,6 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
     jMenuBar.add(m2)
     jMenuBar.add(m3)
   }
+
   // endregion
 }
