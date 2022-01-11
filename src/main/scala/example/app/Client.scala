@@ -15,8 +15,8 @@ class Client(onUpdate: String => Unit) {
   val crdt = new CRDT(clientID)
   var room: Option[Space] = None
 
+  /**Ask for a new collaboration session*/
   def initializeSession(): String = {
-    // Ask for a new collaboration session
     lobby.put(START_SESSION, clientID)
 
     // Receive session ID
@@ -34,18 +34,22 @@ class Client(onUpdate: String => Unit) {
     sessionID
   }
 
+  /**Try to join the session*/
   def joinSession(sessionID: String): Unit = {
-    // Try to join the session
     lobby.put(JOIN_SESSION, clientID, sessionID)
-    lobby.getS(SESSION, clientID, sessionID) // TODO: INVALID_SESSION
-    println(s"Joined a session: $sessionID")
+    if (verifySession(lobby, sessionID)) {
 
-    // Create remote space
-    val sessionSpace = new RemoteSpace(spaceURL(sessionID))
-    room = Some(sessionSpace)
+      println(s"Joined a session: $sessionID")
 
-    // Spawn event listener
-    new Listener(sessionSpace).spawn()
+      // Create remote space
+
+      val sessionSpace = new RemoteSpace(spaceURL(sessionID))
+      room = Some(sessionSpace)
+
+      // Spawn event listener
+      new Listener(sessionSpace).spawn()
+    } else println(s"invalid  session")
+
   }
 
   class Listener(space: Space) extends Runnable {
@@ -58,7 +62,8 @@ class Client(onUpdate: String => Unit) {
     }
   }
 
-  def writeChar(current: Int, str: Char): Unit = notify(crdt.writeAfter(current, str.toString))
+  def writeChar(current: Int, str: Char): Unit =
+    notify(crdt.writeAfter(current, str.toString))
 
   def deleteAt(at: Int): Unit = notify(crdt.deleteAt(at))
 
@@ -72,9 +77,17 @@ class Client(onUpdate: String => Unit) {
         // can replay the previous, unseen, messages
         // space.put(EVENT, "history", event)
 
-        clients.foreach(x => if (x != clientID)
-          space.put(EVENT, x, event)
+        clients.foreach(
+          x =>
+            if (x != clientID)
+              space.put(EVENT, x, event)
         )
     }
+  }
+
+  // TODO: INVALID_SESSION
+  def verifySession(lobby: RemoteSpace, sessionID: String) = {
+//    lobby.getS(SESSION, clientID, sessionID)
+    lobby.querypS(SESSION, clientID, sessionID).nonEmpty
   }
 }
