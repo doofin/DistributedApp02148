@@ -5,6 +5,8 @@ import Common.Event._
 import Common._
 import org.jspace._
 
+import scala.io.StdIn.readLine
+
 // Coordinates clients that work on some file
 object TextServer {
   def main(args: Array[String]): Unit = {
@@ -18,6 +20,9 @@ object TextServer {
 
     new SessionStarter(repo, join).spawn()
     new SessionJoiner(repo, join).spawn()
+
+    readLine("running server,press enter to stop\n")
+    readLine("running server,press enter to stop\n")
   }
 }
 

@@ -12,9 +12,14 @@ import javax.swing.JTextArea
 import java.awt.BorderLayout
 import javax.swing.event.{DocumentEvent, DocumentListener}
 import javax.swing.text.{AbstractDocument, AttributeSet, DocumentFilter}
+import scala.io.StdIn.readLine
 
 object Editor {
-  def main(args: Array[String]): Unit = new Editor
+  def main(args: Array[String]): Unit = {
+    new Editor
+    readLine("running client,press enter to stop\n")
+    readLine("running client,press enter to stop\n")
+  }
 }
 
 class Editor
@@ -22,13 +27,20 @@ class Editor
     with ActionListener
     with AdjustmentListener {
   // region Constructor
+
+  import com.formdev.flatlaf.FlatLightLaf
+  import javax.swing.UIManager
+
+  UIManager.setLookAndFeel(new FlatLightLaf)
+
   setSize(500, 500)
   setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
   setLayout(new BorderLayout)
 
-  val client = new Client(updateText)
   val textArea = new JTextArea()
-  textArea.setFont(new Font("SansSerif", Font.PLAIN, 16))
+  textArea.setFont(new Font("SansSerif", Font.PLAIN, 30))
+
+  val client = new Client(updateText)
 
   val scroll = new JScrollPane(textArea)
   scroll.setVerticalScrollBarPolicy(
@@ -65,6 +77,7 @@ class Editor
   // region Methods
 
   private def updateText(txt: String): Unit = {
+    println(s"updateText : ${txt}")
     textArea.setText(s"[CRDT]$txt")
   }
 

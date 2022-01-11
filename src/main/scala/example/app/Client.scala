@@ -89,5 +89,6 @@ class Client(onUpdate: String => Unit) {
   private def verifySession(lobby: RemoteSpace, sessionID: String) = {
 //    lobby.getS(SESSION, clientID, sessionID)
     lobby.querypS(SESSION, clientID, sessionID).nonEmpty
+    true
   }
 }
