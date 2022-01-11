@@ -21,6 +21,7 @@ object TextServer {
   }
 }
 
+/**for creating new session*/
 class SessionStarter(repo: SpaceRepository, joinSpace: Space) extends Runnable {
   override def run(): Unit = {
     println("Listening for CREATE requests...")
@@ -43,16 +44,18 @@ class SessionStarter(repo: SpaceRepository, joinSpace: Space) extends Runnable {
   }
 }
 
+/**handling actions of joining a existing session*/
 class SessionJoiner(repo: SpaceRepository, joinSpace: Space) extends Runnable {
   override def run(): Unit = {
     println("Listening for JOIN requests...")
     while (!Thread.currentThread().isInterrupted) {
       // wait for an incoming connection
-      val (_, clientId, sessionID) = joinSpace.getS(JOIN_SESSION, classOf[String], classOf[String])
+      val (_, clientId, sessionID) =
+        joinSpace.getS(JOIN_SESSION, classOf[String], classOf[String])
 
       // check if session exists
       Option(repo.get(sessionID)) match {
-        case None => joinSpace.put(INVALID_SESSION, clientId, sessionID)
+        case None            => joinSpace.put(INVALID_SESSION, clientId, sessionID)
         case Some(fileSpace) =>
           // Notify others
           val (_, oldClients) = fileSpace.getS(CLIENTS, classOf[Array[String]])
