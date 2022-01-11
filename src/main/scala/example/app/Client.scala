@@ -16,7 +16,7 @@ class Client(onUpdate: String => Unit) {
   var room: Option[Space] = None
 
   /**Ask for a new collaboration session*/
-  def initializeSession(): String = {
+  def newSession(): String = {
     lobby.put(START_SESSION, clientID)
 
     // Receive session ID
@@ -86,7 +86,7 @@ class Client(onUpdate: String => Unit) {
   }
 
   // TODO: INVALID_SESSION
-  def verifySession(lobby: RemoteSpace, sessionID: String) = {
+  private def verifySession(lobby: RemoteSpace, sessionID: String) = {
 //    lobby.getS(SESSION, clientID, sessionID)
     lobby.querypS(SESSION, clientID, sessionID).nonEmpty
   }

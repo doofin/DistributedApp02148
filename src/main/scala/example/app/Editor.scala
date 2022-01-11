@@ -17,7 +17,10 @@ object Editor {
   def main(args: Array[String]): Unit = new Editor
 }
 
-class Editor extends JFrame("Group 5 – Collaborative Text Editor") with ActionListener with AdjustmentListener {
+class Editor
+    extends JFrame("Group 5 – Collaborative Text Editor")
+    with ActionListener
+    with AdjustmentListener {
   // region Constructor
   setSize(500, 500)
   setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
@@ -28,8 +31,12 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
   textArea.setFont(new Font("SansSerif", Font.PLAIN, 16))
 
   val scroll = new JScrollPane(textArea)
-  scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS)
-  scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS)
+  scroll.setVerticalScrollBarPolicy(
+    ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
+  )
+  scroll.setHorizontalScrollBarPolicy(
+    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
+  )
 
   val panel = new JPanel
   panel.setLayout(new BorderLayout)
@@ -66,17 +73,22 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
   override def actionPerformed(ae: ActionEvent): Unit = {
     ae.getActionCommand match {
       case "New session" =>
-        val sessionID = client.initializeSession()
-        JOptionPane.showMessageDialog(null, s"Session ID: $sessionID", "Info", JOptionPane.INFORMATION_MESSAGE)
+        val sessionID = client.newSession()
+        JOptionPane.showMessageDialog(
+          null,
+          s"Session ID: $sessionID",
+          "Info",
+          JOptionPane.INFORMATION_MESSAGE
+        )
         statusBar.setText(s" Connected: $sessionID") // TODO: Handle failure
       case "Join session" =>
         val sessionID = JOptionPane.showInputDialog("Session ID:")
         client.joinSession(sessionID)
         statusBar.setText(s" Connected: $sessionID") // TODO: Handle failure
-      case "Copy" => textArea.copy()
-      case "Cut" => textArea.cut()
+      case "Copy"  => textArea.copy()
+      case "Cut"   => textArea.cut()
       case "Paste" => textArea.paste()
-      case "Open" =>
+      case "Open"  =>
         // Create an object of JFileChooser class
         val fileOpener = new JFileChooser("f:")
 
@@ -86,7 +98,8 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
           Try {
             val path = fileOpener.getSelectedFile.getAbsolutePath
             val source = Source.fromFile(path)
-            val text = try source.getLines mkString "\n" finally source.close()
+            val text = try source.getLines mkString "\n"
+            finally source.close()
             textArea.setText(text)
           } match {
             case Success(_) => ()
@@ -100,49 +113,51 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
         val r = fileSaver.showSaveDialog(null)
         if (r == JFileChooser.APPROVE_OPTION) {
           val file = new File(fileSaver.getSelectedFile.getAbsolutePath)
-          try {
+          Try {
             val wr = new BufferedWriter(new FileWriter(file, false))
             wr.write(textArea.getText)
             wr.close()
-          } catch {
-            case e: Exception => JOptionPane.showMessageDialog(this, e.getMessage)
+          } match {
+            case Failure(e) =>
+              JOptionPane.showMessageDialog(this, e.getMessage)
+            case Success(value) =>
           }
         }
       case "Close" =>
         setVisible(false)
         System.exit(0)
       case "About" =>
-        JOptionPane.showMessageDialog(this, "Collaborative text editor by Group 5")
+        JOptionPane.showMessageDialog(
+          this,
+          "Collaborative text editor by Group 5"
+        )
     }
   }
 
-  private def addToMenus(jMenuBar: JMenuBar): Component = {
+  private def addToMenus(jMenuBar: JMenuBar): Unit = {
     // File menu
     val m1 = new JMenu("File")
-    val m1a = new JMenuItem("New session")
-    val m1b = new JMenuItem("Join session")
-    val m1c = new JMenuItem("Open")
-    val m1d = new JMenuItem("Save")
-    m1a.addActionListener(this)
-    m1b.addActionListener(this)
-    m1c.addActionListener(this)
-    m1d.addActionListener(this)
-    m1.add(m1a)
-    m1.add(m1b)
-    m1.add(m1c)
-    m1.add(m1d)
-
+    val m1Items = Seq(
+      new JMenuItem("New session"),
+      new JMenuItem("Join session"),
+      new JMenuItem("Open"),
+      new JMenuItem("Save")
+    )
+    m1Items foreach { x =>
+      x.addActionListener(this)
+      m1.add(x)
+    }
     // Edit menu
     val m2 = new JMenu("Edit")
-    val m2a = new JMenuItem("Cut")
-    val m2b = new JMenuItem("Copy")
-    val m2c = new JMenuItem("Paste")
-    m2a.addActionListener(this)
-    m2b.addActionListener(this)
-    m2c.addActionListener(this)
-    m2.add(m2a)
-    m2.add(m2b)
-    m2.add(m2c)
+    val m2Items = Seq(
+      new JMenuItem("Cut"),
+      new JMenuItem("Copy"),
+      new JMenuItem("Paste")
+    )
+    m2Items foreach { x =>
+      x.addActionListener(this)
+      m2.add(x)
+    }
 
     // Help / about menu
     val m3 = new JMenu("Help")
@@ -150,9 +165,7 @@ class Editor extends JFrame("Group 5 – Collaborative Text Editor") with Action
     m3a.addActionListener(this)
     m3.add(m3a)
 
-    jMenuBar.add(m1)
-    jMenuBar.add(m2)
-    jMenuBar.add(m3)
+    Seq(m1, m2, m3) foreach (jMenuBar add _)
   }
 
   // endregion
@@ -173,13 +186,21 @@ class DocumentChangeListener(client: Client) extends DocumentListener {
 
   def logChange(e: DocumentEvent, action: String): Unit = {
     val changeLength = e.getLength
-    println(s"$changeLength character${if (changeLength == 1) " " else "s "}$action document at (${e.getOffset})")
+    println(
+      s"$changeLength character${if (changeLength == 1) " " else "s "}$action document at (${e.getOffset})"
+    )
     println(s"CRDT: ${client.crdt.asString}")
   }
 }
 
 class DocumentInsertionFilter(client: Client) extends DocumentFilter {
-  override def replace(fb: DocumentFilter.FilterBypass, offset: Int, length: Int, text: String, attrs: AttributeSet): Unit = {
+  override def replace(
+      fb: DocumentFilter.FilterBypass,
+      offset: Int,
+      length: Int,
+      text: String,
+      attrs: AttributeSet
+  ): Unit = {
     if (text.startsWith("[CRDT]")) {
       super.replace(fb, offset, length, text.drop(6), attrs)
     } else {
@@ -188,7 +209,11 @@ class DocumentInsertionFilter(client: Client) extends DocumentFilter {
     }
   }
 
-  override def remove(fb: DocumentFilter.FilterBypass, offset: Int, length: Int): Unit = {
+  override def remove(
+      fb: DocumentFilter.FilterBypass,
+      offset: Int,
+      length: Int
+  ): Unit = {
     val indices = (offset until offset + length).reverse
     for (ix <- indices) client.deleteAt(ix + 1)
     super.remove(fb, offset, length)
