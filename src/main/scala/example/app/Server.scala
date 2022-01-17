@@ -20,9 +20,27 @@ object TextServer {
 
     new SessionStarter(repo, join).spawn()
     new SessionJoiner(repo, join).spawn()
+    new SessionIdCreator(join).spawn()
 
     readLine("running server,press enter to stop\n")
     readLine("running server,press enter to stop\n")
+  }
+}
+
+/**  for creating unique id's**/
+class SessionIdCreator(joinSpace: Space) extends Runnable {
+  override def run(): Unit = {
+    println("Listening for ID requests...")
+    var id =1 //initial id value.
+
+    while (!Thread.currentThread().isInterrupted) {
+      // wait for an incoming connection
+      joinSpace.getS(GENERATE_NEW_ID)
+      //generate new id
+      joinSpace.put(NEWID,id)
+      id+=1
+
+    }
   }
 }
 
@@ -37,6 +55,7 @@ class SessionStarter(repo: SpaceRepository, joinSpace: Space) extends Runnable {
       // create a tuple space for the client
       val sessionID = s"session-$clientId"
       val fileSpace = new SequentialSpace
+
       repo.add(sessionID, fileSpace)
 
       // save info about new space
