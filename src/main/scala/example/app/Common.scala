@@ -14,5 +14,7 @@ object Common {
     val INVALID_SESSION: String = "invalid"
     val EVENT: String = "event"
     val CLIENTS: String = "clients"
+    val GENERATE_NEW_ID = "generateId"
+    val NEWID = "newId"
   }
 }

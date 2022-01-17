@@ -7,6 +7,7 @@ import org.jspace._
 
 import scala.io.StdIn.readLine
 
+
 // Coordinates clients that work on some file
 object TextServer {
   def main(args: Array[String]): Unit = {
@@ -20,9 +21,27 @@ object TextServer {
 
     new SessionStarter(repo, join).spawn()
     new SessionJoiner(repo, join).spawn()
+    new SessionIdCreator(join).spawn()
 
     readLine("running server,press enter to stop\n")
     readLine("running server,press enter to stop\n")
+  }
+}
+
+/**  for creating unique id's**/
+class SessionIdCreator(joinSpace: Space) extends Runnable {
+  override def run(): Unit = {
+    println("Listening for ID requests...")
+    var id =1 //initial id value.
+
+    while (!Thread.currentThread().isInterrupted) {
+      // wait for an incoming connection
+      joinSpace.getS(GENERATE_NEW_ID)
+      //generate new id
+      joinSpace.put(NEWID,id)
+      id+=1
+
+    }
   }
 }
 
@@ -30,13 +49,15 @@ object TextServer {
 class SessionStarter(repo: SpaceRepository, joinSpace: Space) extends Runnable {
   override def run(): Unit = {
     println("Listening for CREATE requests...")
+    var ServerNumber =1
     while (!Thread.currentThread().isInterrupted) {
       // wait for an incoming connection
       val (_, clientId) = joinSpace.getS(START_SESSION, classOf[String])
 
       // create a tuple space for the client
-      val sessionID = s"session-$clientId"
+      val sessionID = s"session-$clientId-$ServerNumber"
       val fileSpace = new SequentialSpace
+
       repo.add(sessionID, fileSpace)
 
       // save info about new space
@@ -45,6 +66,7 @@ class SessionStarter(repo: SpaceRepository, joinSpace: Space) extends Runnable {
       // send its name back
       println(s"Client $clientId created a session: $sessionID")
       joinSpace.put(SESSION, clientId, sessionID)
+      ServerNumber +=1
     }
   }
 }

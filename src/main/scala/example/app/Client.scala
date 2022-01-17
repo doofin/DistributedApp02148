@@ -11,7 +11,9 @@ import scala.util.Random
 
 class Client(onUpdate: String => Unit) {
   val lobby = new RemoteSpace(spaceURL(JOIN_SPACE_ID))
-  val clientID = Random.nextInt(1000).toString
+  //val clientID = 1.toString
+
+  val clientID = getID().toString
   val crdt = new CRDT(clientID)
   var room: Option[Space] = None
 
@@ -33,7 +35,12 @@ class Client(onUpdate: String => Unit) {
     // Return session ID
     sessionID
   }
+  def getID (): Int = {
+    lobby.put(GENERATE_NEW_ID)
+    val (_,id) = lobby.getS(NEWID,classOf[Integer])
 
+    id.toInt
+  }
   /**Try to join the session*/
   def joinSession(sessionID: String): Unit = {
     lobby.put(JOIN_SESSION, clientID, sessionID)
