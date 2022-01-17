@@ -7,6 +7,7 @@ import org.jspace._
 
 import scala.io.StdIn.readLine
 
+
 // Coordinates clients that work on some file
 object TextServer {
   def main(args: Array[String]): Unit = {
@@ -48,12 +49,13 @@ class SessionIdCreator(joinSpace: Space) extends Runnable {
 class SessionStarter(repo: SpaceRepository, joinSpace: Space) extends Runnable {
   override def run(): Unit = {
     println("Listening for CREATE requests...")
+    var ServerNumber =1
     while (!Thread.currentThread().isInterrupted) {
       // wait for an incoming connection
       val (_, clientId) = joinSpace.getS(START_SESSION, classOf[String])
 
       // create a tuple space for the client
-      val sessionID = s"session-$clientId"
+      val sessionID = s"session-$clientId-$ServerNumber"
       val fileSpace = new SequentialSpace
 
       repo.add(sessionID, fileSpace)
@@ -64,6 +66,7 @@ class SessionStarter(repo: SpaceRepository, joinSpace: Space) extends Runnable {
       // send its name back
       println(s"Client $clientId created a session: $sessionID")
       joinSpace.put(SESSION, clientId, sessionID)
+      ServerNumber +=1
     }
   }
 }
