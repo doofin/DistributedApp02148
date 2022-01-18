@@ -82,7 +82,9 @@ class SessionJoiner(repo: SpaceRepository, joinSpace: Space) extends Runnable {
 
       // check if session exists
       Option(repo.get(sessionID)) match {
-        case None            => joinSpace.put(INVALID_SESSION, clientId, sessionID)
+        case None            =>
+          joinSpace.put(INVALID_SESSION, clientId, sessionID)
+          println(s"Session : $sessionID does not exist")
         case Some(fileSpace) =>
           // Notify others
           val (_, oldClients) = fileSpace.getS(CLIENTS, classOf[Array[String]])
@@ -91,6 +93,7 @@ class SessionJoiner(repo: SpaceRepository, joinSpace: Space) extends Runnable {
           // Respond that session worked
           joinSpace.put(SESSION, clientId, sessionID)
           println(s"Client $clientId joined session $sessionID")
+
       }
     }
   }

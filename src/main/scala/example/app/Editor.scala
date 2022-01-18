@@ -96,8 +96,10 @@ class Editor
         statusBar.setText(s" Connected: $sessionID") // TODO: Handle failure
       case "Join session" =>
         val sessionID = JOptionPane.showInputDialog("Session ID:")
-        client.joinSession(sessionID)
-        statusBar.setText(s" Connected: $sessionID") // TODO: Handle failure
+        if (sessionID!=null) {  // check if cancel was pressed
+          client.joinSession(sessionID)
+          statusBar.setText(s" Connected: $sessionID") // TODO: Handle failure
+        }
       case "Copy"  => textArea.copy()
       case "Cut"   => textArea.cut()
       case "Paste" => textArea.paste()

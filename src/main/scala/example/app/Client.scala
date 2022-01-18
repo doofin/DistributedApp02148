@@ -5,6 +5,7 @@ import Common.Event._
 import Common._
 import example.app.CRDT.Operations._
 import example.app.CRDT._
+import org.jspace
 import org.jspace._
 
 import scala.util.Random
@@ -55,7 +56,7 @@ class Client(onUpdate: String => Unit) {
 
       // Spawn event listener
       new Listener(sessionSpace).spawn()
-    } else println(s"invalid  session")
+    } else println(s"invalid  session. $sessionID does not exist")
 
   }
 
@@ -92,10 +93,10 @@ class Client(onUpdate: String => Unit) {
     }
   }
 
-  // TODO: INVALID_SESSION
-  private def verifySession(lobby: RemoteSpace, sessionID: String) = {
-//    lobby.getS(SESSION, clientID, sessionID)
-    lobby.querypS(SESSION, clientID, sessionID).nonEmpty
-    true
-  }
+  private def verifySession(lobby: RemoteSpace, sessionID: String):Boolean = {
+
+    val (test,_,_) =lobby.getS(classOf[String], clientID, sessionID)
+    test.equals(SESSION)
+
+   }
 }
