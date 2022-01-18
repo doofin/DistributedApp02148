@@ -92,9 +92,8 @@ class Client(onUpdate: String => Unit) {
         )
     }
   }
-
+    // Ask server if Session exists.
   private def verifySession(lobby: RemoteSpace, sessionID: String):Boolean = {
-
     val (test,_,_) =lobby.getS(classOf[String], clientID, sessionID)
     test.equals(SESSION)
 
