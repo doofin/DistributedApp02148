@@ -4,6 +4,8 @@ ThisBuild / organization := "com.example"
 ThisBuild / organizationName := "example"
 
 resolvers += "jitpack" at "https://jitpack.io"
+enablePlugins(DockerPlugin)
+enablePlugins(JavaAppPackaging)
 
 lazy val root = (project in file("."))
   .settings(
