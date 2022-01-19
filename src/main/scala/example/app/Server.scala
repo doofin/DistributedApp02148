@@ -3,6 +3,7 @@ package example.app
 import example.ScalaSpaces.{RunnableOps, SpaceOps}
 import Common.Event._
 import Common._
+import example.app.TextServer.SessArray
 import org.jspace._
 
 import java.util
@@ -11,21 +12,23 @@ import scala.io.StdIn.readLine
 
 // Coordinates clients that work on some file
 object TextServer {
+  type SessArray = util.ArrayList[(String, SequentialSpace)]
+
   def main(args: Array[String]): Unit = {
     // Create a repository
 
     val repo = new SpaceRepository
-    val join = new SequentialSpace
-    val sessionArray = new util.ArrayList[SequentialSpace]
+    val lobby = new SequentialSpace
+    val sessionArray = new util.ArrayList[(String, SequentialSpace)]
 
-    repo.add(JOIN_SPACE_ID, join)
+    repo.add(LOBBY_SPACE_ID, lobby)
     repo.addGate(baseURL)
 
-    new SessionStarter(repo, join, sessionArray).spawn()
-    new SessionJoiner(repo, join).spawn()
-    new SessionIdCreator(join).spawn()
-    new SessionCleanup(repo, join).spawn()
-    new SessionButler(repo, sessionArray).spawn()
+    new SessionStarter(repo, lobby, sessionArray).spawn()
+    new SessionJoiner(repo, lobby).spawn()
+    new SessionIdCreator(lobby).spawn()
+    new SessionCleanup(repo, lobby, sessionArray).spawn()
+    new SessionButler(lobby, sessionArray).spawn()
 
     readLine("Press ENTER to stop the server\n")
   }
@@ -49,7 +52,7 @@ class SessionIdCreator(lobby: Space) extends Runnable {
 }
 
 /** for creating new session */
-class SessionStarter(repo: SpaceRepository, lobby: Space, sessionArray: util.ArrayList[SequentialSpace]) extends Runnable {
+class SessionStarter(repo: SpaceRepository, lobby: Space, sessionArray: SessArray) extends Runnable {
   override def run(): Unit = {
     println("Listening for CREATE requests...")
     var ServerNumber = 1
@@ -62,7 +65,7 @@ class SessionStarter(repo: SpaceRepository, lobby: Space, sessionArray: util.Arr
       val fileSpace = new SequentialSpace
 
       repo.add(sessionID, fileSpace)
-      sessionArray.add(fileSpace)
+      sessionArray.add((sessionID, fileSpace))
       // save info about new space
       fileSpace.put(CLIENTS, Array(clientId))
 
@@ -103,44 +106,39 @@ class SessionJoiner(repo: SpaceRepository, lobby: Space) extends Runnable {
 }
 
 /** handling actions of cleaning up sessions after everyone leaves */
-class SessionCleanup(repo: SpaceRepository, lobby: Space) extends Runnable {
+class SessionCleanup(repo: SpaceRepository, lobby: Space, sessionArray: SessArray) extends Runnable {
   override def run(): Unit = {
     println("Listening for CLEANUP requests...")
     while (!Thread.currentThread().isInterrupted) {
       val (_, sessionID) = lobby.getS(CLEANUP, classOf[String])
       repo.remove(sessionID)
+      sessionArray.removeIf(tuple => tuple._1 == sessionID)
       println(s"Session $sessionID closed")
     }
   }
 }
 
 /** handling actions of cleaning up sessions after everyone leaves */
-class SessionButler(repo: SpaceRepository, sessionArray: util.ArrayList[SequentialSpace]) extends Runnable {
+class SessionButler(lobby: Space, sessionArray: SessArray) extends Runnable {
   override def run(): Unit = {
-    println("Butler")
+    println("Butler listening...")
     while (!Thread.currentThread().isInterrupted) {
-      sessionArray.forEach(session => {
-        val (_, clientlistx) = session.getS(CLIENTS, classOf[Array[String]])
-        var newList = clientlistx
-        clientlistx.foreach(client => {
+      sessionArray.forEach(tuple => {
+        val (sessionId, session) = tuple
+
+        val (_, clients) = session.getS(CLIENTS, classOf[Array[String]])
+        var newClients = clients
+        clients.foreach(client => {
           if (session.queryAllS(PING, client).length > 2) {
-
-            newList = newList.filter(_ != client)
+            newClients = newClients.filter(_ != client)
             println(s"Removed user: $client")
-
           } else {
-
             session.put(PING, client)
           }
-        }
-        )
-        //if (newList.isEmpty){
-        //  lobby.put(CLEANUP,session)
-        //
-        //}
-        //else {
-        //  session.put(CLIENTS, newList)
-        //}
+        })
+
+        if (newClients.isEmpty) lobby.put(CLEANUP, sessionId)
+        session.put(CLIENTS, newClients)
       })
 
       Thread.sleep(1000)

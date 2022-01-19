@@ -12,7 +12,7 @@ import javax.swing.JOptionPane
 import scala.util.Random
 
 class Client(onUpdate: String => Unit) {
-  val lobby = new RemoteSpace(spaceURL(JOIN_SPACE_ID))
+  val lobby = new RemoteSpace(spaceURL(LOBBY_SPACE_ID))
 
   val clientID: ClientID = getID().toString
   val crdt = new CRDT(clientID)
