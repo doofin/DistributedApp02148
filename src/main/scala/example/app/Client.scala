@@ -8,6 +8,7 @@ import example.app.CRDT._
 import org.jspace
 import org.jspace._
 
+import javax.swing.JOptionPane
 import scala.util.Random
 
 class Client(onUpdate: String => Unit) {
@@ -36,16 +37,18 @@ class Client(onUpdate: String => Unit) {
     // Return session ID
     sessionID
   }
-  def getID (): Int = {
+  def getID(): Int = {
     lobby.put(GENERATE_NEW_ID)
-    val (_,id) = lobby.getS(NEWID,classOf[Integer])
+    val (_, id) = lobby.getS(NEWID, classOf[Integer])
 
     id.toInt
   }
+
   /**Try to join the session*/
-  def joinSession(sessionID: String): Unit = {
+  def joinSession(sessionID: String): Boolean = {
     lobby.put(JOIN_SESSION, clientID, sessionID)
-    if (verifySession(lobby, sessionID)) {
+    val bool = verifySession(lobby, sessionID)
+    if (bool) {
 
       println(s"Joined a session: $sessionID")
 
@@ -56,8 +59,17 @@ class Client(onUpdate: String => Unit) {
 
       // Spawn event listener
       new Listener(sessionSpace).spawn()
-    } else println(s"invalid  session. $sessionID does not exist")
-
+    } else {
+      val msg = s"invalid  session. $sessionID does not exist"
+      println(msg)
+      JOptionPane.showMessageDialog(
+        null,
+        msg,
+        "Info",
+        JOptionPane.INFORMATION_MESSAGE
+      )
+    }
+    bool
   }
 
   class Listener(space: Space) extends Runnable {
@@ -92,10 +104,10 @@ class Client(onUpdate: String => Unit) {
         )
     }
   }
-    // Ask server if Session exists.
-  private def verifySession(lobby: RemoteSpace, sessionID: String):Boolean = {
-    val (test,_,_) =lobby.getS(classOf[String], clientID, sessionID)
-    test.equals(SESSION)
+  // Ask server if Session exists.
+  private def verifySession(lobby: RemoteSpace, sessionID: String): Boolean = {
+    val (test, _, _) = lobby.getS(classOf[String], clientID, sessionID)
+    test == SESSION
 
-   }
+  }
 }
