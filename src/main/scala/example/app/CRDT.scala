@@ -76,7 +76,8 @@ class CRDT(site: ClientID) {
         case None =>
         case Some(_) => counter += 1
       }
-      if (index == counter) return Some(ptr)
+      if (index == counter)
+        return Some(ptr)
     }
     None
   }
@@ -101,9 +102,11 @@ class CRDT(site: ClientID) {
     event
   }
 
-  def writeAtEnd(string: String): Inserted[String] = writeAfter(Integer.MAX_VALUE, string)
-
-  def deleteLast(): Removed[String] = deleteAt(Integer.MAX_VALUE)
+  def clear(): Unit = {
+    clock = 0
+    vertices.clear()
+    vertices.addOne(root)
+  }
 
   def asString: String = vertices.map(x => x._2.getOrElse("")).mkString("")
 }

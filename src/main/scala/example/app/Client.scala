@@ -13,14 +13,14 @@ import scala.util.Random
 
 class Client(onUpdate: String => Unit) {
   val lobby = new RemoteSpace(spaceURL(JOIN_SPACE_ID))
-  //val clientID = 1.toString
 
-  val clientID = getID().toString
+  val clientID: ClientID = getID().toString
   val crdt = new CRDT(clientID)
   var room: Option[Space] = None
 
-  /**Ask for a new collaboration session*/
+  /** Ask for a new collaboration session */
   def newSession(): String = {
+    clear()
     lobby.put(START_SESSION, clientID)
 
     // Receive session ID
@@ -37,6 +37,12 @@ class Client(onUpdate: String => Unit) {
     // Return session ID
     sessionID
   }
+
+  private def process(event: Operation[String]): Unit = {
+    crdt.applyOperation(event)
+    onUpdate(crdt.asString)
+  }
+
   def getID(): Int = {
     lobby.put(GENERATE_NEW_ID)
     val (_, id) = lobby.getS(NEWID, classOf[Integer])
@@ -44,40 +50,45 @@ class Client(onUpdate: String => Unit) {
     id.toInt
   }
 
-  /**Try to join the session*/
-  def joinSession(sessionID: String): Boolean = {
-    lobby.put(JOIN_SESSION, clientID, sessionID)
-    val bool = verifySession(lobby, sessionID)
-    if (bool) {
+  def clear(): Unit = {
+    crdt.clear()
+    onUpdate(crdt.asString)
+  }
 
+  /** Try to join the session */
+  def joinSession(sessionID: String): Boolean = {
+    clear()
+    lobby.put(JOIN_SESSION, clientID, sessionID)
+    val valid = verifySession(lobby, sessionID)
+    if (valid) {
       println(s"Joined a session: $sessionID")
 
       // Create remote space
-
       val sessionSpace = new RemoteSpace(spaceURL(sessionID))
       room = Some(sessionSpace)
+
+      // Recreate history
+      val history = sessionSpace.queryAllS(EVENT, HISTORY, classOf[Operation[String]])
+      history foreach (x => process(x._3))
 
       // Spawn event listener
       new Listener(sessionSpace).spawn()
     } else {
-      val msg = s"invalid  session. $sessionID does not exist"
-      println(msg)
       JOptionPane.showMessageDialog(
         null,
-        msg,
+        s"Invalid session \"$sessionID\"",
         "Info",
         JOptionPane.INFORMATION_MESSAGE
       )
     }
-    bool
+    valid
   }
 
   class Listener(space: Space) extends Runnable {
     override def run(): Unit = {
       while (true) {
         val (_, _, op) = space.getS(EVENT, clientID, classOf[Operation[String]])
-        crdt.applyOperation(op)
-        onUpdate(crdt.asString)
+        process(op)
       }
     }
   }
@@ -93,21 +104,14 @@ class Client(onUpdate: String => Unit) {
       case Some(space) =>
         val (_, clients) = space.queryS(CLIENTS, classOf[Array[String]])
 
-        // TODO: Save every event with some global tag, so that everyone who joins late
-        // can replay the previous, unseen, messages
-        // space.put(EVENT, "history", event)
-
-        clients.foreach(
-          x =>
-            if (x != clientID)
-              space.put(EVENT, x, event)
-        )
+        space.put(EVENT, HISTORY, event)
+        clients.filter(_ != clientID).foreach(space.put(EVENT, _, event))
     }
   }
+
   // Ask server if Session exists.
   private def verifySession(lobby: RemoteSpace, sessionID: String): Boolean = {
     val (test, _, _) = lobby.getS(classOf[String], clientID, sessionID)
     test == SESSION
-
   }
 }

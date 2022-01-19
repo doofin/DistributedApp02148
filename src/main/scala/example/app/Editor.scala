@@ -18,12 +18,11 @@ object Editor {
   def main(args: Array[String]): Unit = {
     new Editor
     readLine("running client,press enter to stop\n")
-    readLine("running client,press enter to stop\n")
   }
 }
 
 class Editor
-    extends JFrame("Group 5 – Collaborative Text Editor")
+  extends JFrame("Group 5 – Collaborative Text Editor")
     with ActionListener
     with AdjustmentListener {
   // region Constructor
@@ -77,7 +76,6 @@ class Editor
   // region Methods
 
   private def updateText(txt: String): Unit = {
-    println(s"updateText : ${txt}")
     textArea.setText(s"[CRDT]$txt")
   }
 
@@ -100,10 +98,10 @@ class Editor
           if (client.joinSession(sessionID))
             statusBar.setText(s" Connected: $sessionID") // TODO: Handle failure
         }
-      case "Copy"  => textArea.copy()
-      case "Cut"   => textArea.cut()
+      case "Copy" => textArea.copy()
+      case "Cut" => textArea.cut()
       case "Paste" => textArea.paste()
-      case "Open"  =>
+      case "Open" =>
         // Create an object of JFileChooser class
         val fileOpener = new JFileChooser("f:")
 
@@ -204,33 +202,34 @@ class DocumentChangeListener(client: Client) extends DocumentListener {
     println(
       s"$changeLength character${if (changeLength == 1) " " else "s "}$action document at (${e.getOffset})"
     )
-    println(s"CRDT: ${client.crdt.asString}")
   }
 }
 
 class DocumentInsertionFilter(client: Client) extends DocumentFilter {
   override def replace(
-      fb: DocumentFilter.FilterBypass,
-      offset: Int,
-      length: Int,
-      text: String,
-      attrs: AttributeSet
-  ): Unit = {
+                        fb: DocumentFilter.FilterBypass,
+                        offset: Int,
+                        length: Int,
+                        text: String,
+                        attrs: AttributeSet
+                      ): Unit = {
     if (text.startsWith("[CRDT]")) {
       super.replace(fb, offset, length, text.drop(6), attrs)
     } else {
       super.replace(fb, offset, length, text, attrs)
       for (c <- text.reverse) client.writeChar(offset, c)
     }
+    println(s"CRDT: ${client.crdt.asString}")
   }
 
   override def remove(
-      fb: DocumentFilter.FilterBypass,
-      offset: Int,
-      length: Int
-  ): Unit = {
+                       fb: DocumentFilter.FilterBypass,
+                       offset: Int,
+                       length: Int
+                     ): Unit = {
     val indices = (offset until offset + length).reverse
     for (ix <- indices) client.deleteAt(ix + 1)
     super.remove(fb, offset, length)
+    println(s"CRDT: ${client.crdt.asString}")
   }
 }
