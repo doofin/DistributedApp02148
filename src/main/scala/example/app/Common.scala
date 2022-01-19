@@ -18,5 +18,7 @@ object Common {
     val NEWID = "newId"
     val HISTORY = "history"
     val CLEANUP = "cleanup"
+    val PING = "ping"
+
   }
 }

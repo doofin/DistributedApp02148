@@ -18,6 +18,7 @@ class Client(onUpdate: String => Unit) {
   val crdt = new CRDT(clientID)
   var room: Option[RemoteSpace] = None
   var listener: Option[Thread] = None
+  var listenerPing: Option[Thread] = None
   var sessionID: String = ""
 
   /** Ask for a new collaboration session */
@@ -35,10 +36,13 @@ class Client(onUpdate: String => Unit) {
 
     // Spawn event listener
     listener = Some(new Listener(space).spawn())
+    listenerPing = Some(new ListenerPing(space).spawn())
+
 
     // Return session ID
     sessionID
   }
+
 
   private def process(event: Operation[String]): Unit = {
     crdt.applyOperation(event)
@@ -57,7 +61,12 @@ class Client(onUpdate: String => Unit) {
       case None =>
       case Some(thread) => thread.interrupt()
     }
+    listenerPing match {
+      case None =>
+      case Some(thread) => thread.interrupt()
+    }
     listener = None
+    listenerPing = None
 
     room match {
       case None =>
@@ -110,6 +119,14 @@ class Client(onUpdate: String => Unit) {
       while (true) {
         val (_, _, op) = space.getS(EVENT, clientID, classOf[Operation[String]])
         process(op)
+      }
+    }
+  }
+  class ListenerPing(space: Space) extends Runnable {
+    override def run(): Unit = {
+      while (true) {
+        space.getS(PING,clientID)
+        println("got a ping!")
       }
     }
   }

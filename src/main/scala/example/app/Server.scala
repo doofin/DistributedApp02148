@@ -5,6 +5,7 @@ import Common.Event._
 import Common._
 import org.jspace._
 
+import java.util
 import scala.io.StdIn.readLine
 
 
@@ -15,20 +16,22 @@ object TextServer {
 
     val repo = new SpaceRepository
     val join = new SequentialSpace
+    val sessionArray = new util.ArrayList[SequentialSpace]
 
     repo.add(JOIN_SPACE_ID, join)
     repo.addGate(baseURL)
 
-    new SessionStarter(repo, join).spawn()
+    new SessionStarter(repo, join, sessionArray).spawn()
     new SessionJoiner(repo, join).spawn()
     new SessionIdCreator(join).spawn()
     new SessionCleanup(repo, join).spawn()
+    new SessionButler(repo, sessionArray).spawn()
 
     readLine("Press ENTER to stop the server\n")
   }
 }
 
-/** for creating unique IDs **/
+/** for creating unique IDs * */
 class SessionIdCreator(lobby: Space) extends Runnable {
   override def run(): Unit = {
     println("Listening for ID requests...")
@@ -46,7 +49,7 @@ class SessionIdCreator(lobby: Space) extends Runnable {
 }
 
 /** for creating new session */
-class SessionStarter(repo: SpaceRepository, lobby: Space) extends Runnable {
+class SessionStarter(repo: SpaceRepository, lobby: Space, sessionArray: util.ArrayList[SequentialSpace]) extends Runnable {
   override def run(): Unit = {
     println("Listening for CREATE requests...")
     var ServerNumber = 1
@@ -59,7 +62,7 @@ class SessionStarter(repo: SpaceRepository, lobby: Space) extends Runnable {
       val fileSpace = new SequentialSpace
 
       repo.add(sessionID, fileSpace)
-
+      sessionArray.add(fileSpace)
       // save info about new space
       fileSpace.put(CLIENTS, Array(clientId))
 
@@ -107,6 +110,40 @@ class SessionCleanup(repo: SpaceRepository, lobby: Space) extends Runnable {
       val (_, sessionID) = lobby.getS(CLEANUP, classOf[String])
       repo.remove(sessionID)
       println(s"Session $sessionID closed")
+    }
+  }
+}
+
+/** handling actions of cleaning up sessions after everyone leaves */
+class SessionButler(repo: SpaceRepository, sessionArray: util.ArrayList[SequentialSpace]) extends Runnable {
+  override def run(): Unit = {
+    println("Butler")
+    while (!Thread.currentThread().isInterrupted) {
+      sessionArray.forEach(session => {
+        val (_, clientlistx) = session.getS(CLIENTS, classOf[Array[String]])
+        var newList = clientlistx
+        clientlistx.foreach(client => {
+          if (session.queryAllS(PING, client).length > 2) {
+
+            newList = newList.filter(_ != client)
+            println(s"Removed user: $client")
+
+          } else {
+
+            session.put(PING, client)
+          }
+        }
+        )
+        //if (newList.isEmpty){
+        //  lobby.put(CLEANUP,session)
+        //
+        //}
+        //else {
+        //  session.put(CLIENTS, newList)
+        //}
+      })
+
+      Thread.sleep(1000)
     }
   }
 }
