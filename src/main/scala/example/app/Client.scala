@@ -16,7 +16,9 @@ class Client(onUpdate: String => Unit) {
 
   val clientID: ClientID = getID().toString
   val crdt = new CRDT(clientID)
-  var room: Option[Space] = None
+  var room: Option[RemoteSpace] = None
+  var listener: Option[Thread] = None
+  var sessionID: String = ""
 
   /** Ask for a new collaboration session */
   def newSession(): String = {
@@ -24,7 +26,7 @@ class Client(onUpdate: String => Unit) {
     lobby.put(START_SESSION, clientID)
 
     // Receive session ID
-    val sessionID = lobby.getS(SESSION, clientID, classOf[String])._3
+    sessionID = lobby.getS(SESSION, clientID, classOf[String])._3
     println(s"Started a session: $sessionID")
 
     // Create remote space
@@ -32,7 +34,7 @@ class Client(onUpdate: String => Unit) {
     room = Some(space)
 
     // Spawn event listener
-    new Listener(space).spawn()
+    listener = Some(new Listener(space).spawn())
 
     // Return session ID
     sessionID
@@ -51,16 +53,35 @@ class Client(onUpdate: String => Unit) {
   }
 
   def clear(): Unit = {
+    listener match {
+      case None =>
+      case Some(thread) => thread.interrupt()
+    }
+    listener = None
+
+    room match {
+      case None =>
+      case Some(space) =>
+        val (_, clients) = space.getS(CLIENTS, classOf[Array[String]])
+        val updated = clients.filter(_ != clientID)
+        space.put(CLIENTS, updated)
+
+        // if last client, remove the tuple space
+        if (updated.isEmpty) lobby.put(CLEANUP, sessionID)
+    }
+    room = None
+
     crdt.clear()
     onUpdate(crdt.asString)
   }
 
   /** Try to join the session */
-  def joinSession(sessionID: String): Boolean = {
-    clear()
-    lobby.put(JOIN_SESSION, clientID, sessionID)
-    val valid = verifySession(lobby, sessionID)
+  def joinSession(clientSessionID: String): Boolean = {
+    lobby.put(JOIN_SESSION, clientID, clientSessionID)
+    val valid = verifySession(lobby, clientSessionID)
     if (valid) {
+      sessionID = clientSessionID
+      clear()
       println(s"Joined a session: $sessionID")
 
       // Create remote space

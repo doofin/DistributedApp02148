@@ -17,7 +17,7 @@ import scala.io.StdIn.readLine
 object Editor {
   def main(args: Array[String]): Unit = {
     new Editor
-    readLine("running client,press enter to stop\n")
+    readLine("Press ENTER to stop the client\n")
   }
 }
 
@@ -63,9 +63,9 @@ class Editor
   add(statusBar, BorderLayout.SOUTH)
 
   setVisible(true)
-  // endregion
 
-  // region handlers
+  // endregion
+  // region Handlers
 
   private val doc = textArea.getDocument.asInstanceOf[AbstractDocument]
   doc.setDocumentFilter(new DocumentInsertionFilter(client))
@@ -91,12 +91,12 @@ class Editor
           "Info",
           JOptionPane.INFORMATION_MESSAGE
         )
-        statusBar.setText(s" Connected: $sessionID") // TODO: Handle failure
+        statusBar.setText(s" Connected: $sessionID")
       case "Join session" =>
         val sessionID = JOptionPane.showInputDialog("Session ID:")
         if (sessionID != null) { // check if cancel was pressed
           if (client.joinSession(sessionID))
-            statusBar.setText(s" Connected: $sessionID") // TODO: Handle failure
+            statusBar.setText(s" Connected: $sessionID")
         }
       case "Copy" => textArea.copy()
       case "Cut" => textArea.cut()

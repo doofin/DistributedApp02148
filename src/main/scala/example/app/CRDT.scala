@@ -21,10 +21,9 @@ object CRDT {
   }
 }
 
-// TODO: Guard against concurrent access, otherwise this happens with `vertices`:
-// Exception in thread "Thread-2" java.util.ConcurrentModificationException: mutation occurred during iteration
 class CRDT(site: ClientID) {
   type V = Vertex[String]
+  val mutex: Object = new Object()
   val root: V = ((0, ""), None)
   var vertices: mutable.ArrayBuffer[V] = mutable.ArrayBuffer(root)
 
@@ -43,9 +42,11 @@ class CRDT(site: ClientID) {
   }
 
   def applyOperation(op: Operation[String]): Unit = {
-    op match {
-      case i: Inserted[String] => applyInserted(i)
-      case r: Removed[String] => applyRemoved(r)
+    mutex.synchronized {
+      op match {
+        case i: Inserted[String] => applyInserted(i)
+        case r: Removed[String] => applyRemoved(r)
+      }
     }
   }
 
@@ -69,7 +70,7 @@ class CRDT(site: ClientID) {
     vertices.update(index, (at, None))
   }
 
-  def ptrToCharAt(index: Int): Option[VPtr] = {
+  private def ptrToCharAt(index: Int): Option[VPtr] = {
     var counter = -1
     for ((ptr, c) <- vertices.tail) {
       c match {
@@ -91,21 +92,23 @@ class CRDT(site: ClientID) {
     val ptr = pred.getOrElse(vertices.last._1)
 
     val event = Inserted(ptr, (clock + 1, site), string)
-    applyInserted(event)
+    applyOperation(event)
     event
   }
 
   def deleteAt(offset: Int): Removed[String] = {
     val ptr = ptrToCharAt(offset - 1).getOrElse(vertices.last._1)
     val event = Removed[String](ptr)
-    applyRemoved(event)
+    applyOperation(event)
     event
   }
 
   def clear(): Unit = {
-    clock = 0
-    vertices.clear()
-    vertices.addOne(root)
+    mutex.synchronized {
+      clock = 0
+      vertices.clear()
+      vertices.addOne(root)
+    }
   }
 
   def asString: String = vertices.map(x => x._2.getOrElse("")).mkString("")

@@ -17,5 +17,6 @@ object Common {
     val GENERATE_NEW_ID = "generateId"
     val NEWID = "newId"
     val HISTORY = "history"
+    val CLEANUP = "cleanup"
   }
 }
