@@ -1,11 +1,9 @@
-js-opt-bundle.js
-log.txt
+project/project/
+project/metals.sbt
+.bloop/
+.metals/
 *.class
 *.log
-package-lock.json
-
-node_modules
-
 
 # sbt specific
 .cache/
@@ -17,13 +15,11 @@ lib_managed/
 src_managed/
 project/boot/
 project/plugins/project/
-script/project/
 
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
 .idea
-.bsp
 
 # Emacs
 \#*
@@ -32,7 +28,12 @@ script/project/
 .ensime_cache
 
 # Package Files #
-*.jar
+# *.jar
 *.war
 *.ear
 
+*.v
+*.fir
+logs
+.vscode
+.bsp
