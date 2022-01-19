@@ -12,11 +12,14 @@ import javax.swing.JOptionPane
 import scala.util.Random
 
 class Client(onUpdate: String => Unit) {
-  val lobby = new RemoteSpace(spaceURL(JOIN_SPACE_ID))
+  val lobby = new RemoteSpace(spaceURL(LOBBY_SPACE_ID))
 
   val clientID: ClientID = getID().toString
   val crdt = new CRDT(clientID)
-  var room: Option[Space] = None
+  var room: Option[RemoteSpace] = None
+  var listener: Option[Thread] = None
+  var listenerPing: Option[Thread] = None
+  var sessionID: String = ""
 
   /** Ask for a new collaboration session */
   def newSession(): String = {
@@ -24,7 +27,7 @@ class Client(onUpdate: String => Unit) {
     lobby.put(START_SESSION, clientID)
 
     // Receive session ID
-    val sessionID = lobby.getS(SESSION, clientID, classOf[String])._3
+    sessionID = lobby.getS(SESSION, clientID, classOf[String])._3
     println(s"Started a session: $sessionID")
 
     // Create remote space
@@ -32,11 +35,14 @@ class Client(onUpdate: String => Unit) {
     room = Some(space)
 
     // Spawn event listener
-    new Listener(space).spawn()
+    listener = Some(new Listener(space).spawn())
+    listenerPing = Some(new ListenerPing(space).spawn())
+
 
     // Return session ID
     sessionID
   }
+
 
   private def process(event: Operation[String]): Unit = {
     crdt.applyOperation(event)
@@ -51,16 +57,40 @@ class Client(onUpdate: String => Unit) {
   }
 
   def clear(): Unit = {
+    listener match {
+      case None =>
+      case Some(thread) => thread.interrupt()
+    }
+    listenerPing match {
+      case None =>
+      case Some(thread) => thread.interrupt()
+    }
+    listener = None
+    listenerPing = None
+
+    room match {
+      case None =>
+      case Some(space) =>
+        val (_, clients) = space.getS(CLIENTS, classOf[Array[String]])
+        val updated = clients.filter(_ != clientID)
+        space.put(CLIENTS, updated)
+
+        // if last client, remove the tuple space
+        if (updated.isEmpty) lobby.put(CLEANUP, sessionID)
+    }
+    room = None
+
     crdt.clear()
     onUpdate(crdt.asString)
   }
 
   /** Try to join the session */
-  def joinSession(sessionID: String): Boolean = {
-    clear()
-    lobby.put(JOIN_SESSION, clientID, sessionID)
-    val valid = verifySession(lobby, sessionID)
+  def joinSession(clientSessionID: String): Boolean = {
+    lobby.put(JOIN_SESSION, clientID, clientSessionID)
+    val valid = verifySession(lobby, clientSessionID)
     if (valid) {
+      sessionID = clientSessionID
+      clear()
       println(s"Joined a session: $sessionID")
 
       // Create remote space
@@ -89,6 +119,14 @@ class Client(onUpdate: String => Unit) {
       while (true) {
         val (_, _, op) = space.getS(EVENT, clientID, classOf[Operation[String]])
         process(op)
+      }
+    }
+  }
+  class ListenerPing(space: Space) extends Runnable {
+    override def run(): Unit = {
+      while (true) {
+        space.getS(PING,clientID)
+        println("got a ping!")
       }
     }
   }
