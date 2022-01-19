@@ -16,5 +16,6 @@ object Common {
     val CLIENTS: String = "clients"
     val GENERATE_NEW_ID = "generateId"
     val NEWID = "newId"
+    val HISTORY = "history"
   }
 }
