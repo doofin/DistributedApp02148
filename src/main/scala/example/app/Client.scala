@@ -1,17 +1,15 @@
 package example.app
 
 import example.ScalaSpaces.{RunnableOps, SpaceOps}
-import Common.Event._
 import Common._
-import example.app.CRDT.Operations._
 import example.app.CRDT._
-import org.jspace
+import example.app.Event._
+import example.app.Operations._
 import org.jspace._
 
 import javax.swing.JOptionPane
-import scala.util.Random
 
-class Client(onUpdate: String => Unit) {
+class Client(onUpdate: (String, Boolean) => Unit) {
   val lobby = new RemoteSpace(spaceURL(LOBBY_SPACE_ID))
 
   val clientID: ClientID = getID().toString
@@ -38,15 +36,17 @@ class Client(onUpdate: String => Unit) {
     listener = Some(new Listener(space).spawn())
     listenerPing = Some(new ListenerPing(space).spawn())
 
-
     // Return session ID
     sessionID
   }
 
-
   private def process(event: Operation[String]): Unit = {
+    val isInsert = event match {
+      case Removed(_) => false
+      case Inserted(_, _, _) => true
+    }
     crdt.applyOperation(event)
-    onUpdate(crdt.asString)
+    onUpdate(crdt.asString, isInsert)
   }
 
   def getID(): Int = {
@@ -81,7 +81,7 @@ class Client(onUpdate: String => Unit) {
     room = None
 
     crdt.clear()
-    onUpdate(crdt.asString)
+    onUpdate(crdt.asString, false)
   }
 
   /** Try to join the session */
@@ -102,7 +102,9 @@ class Client(onUpdate: String => Unit) {
       history foreach (x => process(x._3))
 
       // Spawn event listener
-      new Listener(sessionSpace).spawn()
+      listener = Some(new Listener(sessionSpace).spawn())
+      listenerPing = Some(new ListenerPing(sessionSpace).spawn())
+
     } else {
       JOptionPane.showMessageDialog(
         null,
@@ -122,10 +124,11 @@ class Client(onUpdate: String => Unit) {
       }
     }
   }
+
   class ListenerPing(space: Space) extends Runnable {
     override def run(): Unit = {
       while (true) {
-        space.getS(PING,clientID)
+        space.getS(PING, clientID)
         println("got a ping!")
       }
     }

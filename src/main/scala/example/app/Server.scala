@@ -1,7 +1,7 @@
 package example.app
 
 import example.ScalaSpaces.{RunnableOps, SpaceOps}
-import Common.Event._
+import example.app.Event._
 import Common._
 import example.app.TextServer.SessArray
 import org.jspace._
@@ -12,6 +12,8 @@ import scala.io.StdIn.readLine
 // Coordinates clients that work on some file
 object TextServer {
   type SessArray = util.ArrayList[(String, SequentialSpace)]
+
+  def main(args: Array[String]): Unit = run()
 
   def run(): Unit = {
     // Create a repository
@@ -52,10 +54,10 @@ class SessionIdCreator(lobby: Space) extends Runnable {
 
 /** for creating new session */
 class SessionStarter(
-    repo: SpaceRepository,
-    lobby: Space,
-    sessionArray: SessArray
-) extends Runnable {
+                      repo: SpaceRepository,
+                      lobby: Space,
+                      sessionArray: SessArray
+                    ) extends Runnable {
   override def run(): Unit = {
     println("Listening for CREATE requests...")
     var ServerNumber = 1
@@ -110,10 +112,10 @@ class SessionJoiner(repo: SpaceRepository, lobby: Space) extends Runnable {
 
 /** handling actions of cleaning up sessions after everyone leaves */
 class SessionCleanup(
-    repo: SpaceRepository,
-    lobby: Space,
-    sessionArray: SessArray
-) extends Runnable {
+                      repo: SpaceRepository,
+                      lobby: Space,
+                      sessionArray: SessArray
+                    ) extends Runnable {
   override def run(): Unit = {
     println("Listening for CLEANUP requests...")
     while (!Thread.currentThread().isInterrupted) {
@@ -134,7 +136,7 @@ class SessionButler(lobby: Space, sessionArray: SessArray) extends Runnable {
         val (sessionId, session) = tuple
 
         val (_, clients) = session.getS(CLIENTS, classOf[Array[String]])
-        var newClients = clients
+        var newClients = clients.clone()
         clients.foreach(client => {
           if (session.queryAllS(PING, client).length > 2) {
             newClients = newClients.filter(_ != client)
@@ -148,7 +150,7 @@ class SessionButler(lobby: Space, sessionArray: SessArray) extends Runnable {
         session.put(CLIENTS, newClients)
       })
 
-      Thread.sleep(1000)
+      Thread.sleep(5000)
     }
   }
 }

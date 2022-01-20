@@ -12,12 +12,13 @@ import javax.swing.JTextArea
 import java.awt.BorderLayout
 import javax.swing.event.{DocumentEvent, DocumentListener}
 import javax.swing.text.{AbstractDocument, AttributeSet, DocumentFilter}
-import scala.io.StdIn.readLine
 
-object Editor {}
+object Editor {
+  def main(args: Array[String]): Unit = new Editor
+}
 
 class Editor
-    extends JFrame("Group 5 – Collaborative Text Editor")
+  extends JFrame("Group 5 – Collaborative Text Editor")
     with ActionListener
     with AdjustmentListener {
   // region Constructor
@@ -70,8 +71,24 @@ class Editor
   // endregion
   // region Methods
 
-  private def updateText(txt: String): Unit = {
-    textArea.setText(s"[CRDT]$txt")
+  private def updateText(newTxt: String, isInsert: Boolean): Unit = {
+    val caret = textArea.getCaretPosition
+    val oldTxt = textArea.getText
+    var diffIndex = oldTxt.zip(newTxt).indexWhere(k => k._1 != k._2)
+    if (diffIndex == -1) {
+      // insert / delete at the end
+      diffIndex = caret + 1
+    }
+    println(s"Index of change: $diffIndex")
+
+    val offset = (diffIndex >= caret, isInsert) match {
+      case (true, _) => 0
+      case (false, true) => 1
+      case (false, false) => -1
+    }
+
+    textArea.setText(s"[CRDT]$newTxt")
+    textArea.setCaretPosition(math.min(newTxt.length, math.max(0, caret + offset)))
   }
 
   override def adjustmentValueChanged(e: AdjustmentEvent): Unit = {}
@@ -93,10 +110,10 @@ class Editor
           if (client.joinSession(sessionID))
             statusBar.setText(s" Connected: $sessionID")
         }
-      case "Copy"  => textArea.copy()
-      case "Cut"   => textArea.cut()
+      case "Copy" => textArea.copy()
+      case "Cut" => textArea.cut()
       case "Paste" => textArea.paste()
-      case "Open"  =>
+      case "Open" =>
         // Create an object of JFileChooser class
         val fileOpener = new JFileChooser("f:")
 
@@ -196,20 +213,22 @@ class DocumentChangeListener(client: Client) extends DocumentListener {
   def logChange(e: DocumentEvent, action: String): Unit = {
     val changeLength = e.getLength
     println(
-      s"$changeLength character${if (changeLength == 1) " "
-      else "s "}$action document at (${e.getOffset})"
+      s"$changeLength character${
+        if (changeLength == 1) " "
+        else "s "
+      }$action document at (${e.getOffset})"
     )
   }
 }
 
 class DocumentInsertionFilter(client: Client) extends DocumentFilter {
   override def replace(
-      fb: DocumentFilter.FilterBypass,
-      offset: Int,
-      length: Int,
-      text: String,
-      attrs: AttributeSet
-  ): Unit = {
+                        fb: DocumentFilter.FilterBypass,
+                        offset: Int,
+                        length: Int,
+                        text: String,
+                        attrs: AttributeSet
+                      ): Unit = {
     if (text.startsWith("[CRDT]")) {
       super.replace(fb, offset, length, text.drop(6), attrs)
     } else {
@@ -220,10 +239,10 @@ class DocumentInsertionFilter(client: Client) extends DocumentFilter {
   }
 
   override def remove(
-      fb: DocumentFilter.FilterBypass,
-      offset: Int,
-      length: Int
-  ): Unit = {
+                       fb: DocumentFilter.FilterBypass,
+                       offset: Int,
+                       length: Int
+                     ): Unit = {
     val indices = (offset until offset + length).reverse
     for (ix <- indices) client.deleteAt(ix + 1)
     super.remove(fb, offset, length)

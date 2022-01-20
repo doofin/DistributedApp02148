@@ -1,7 +1,7 @@
 package example.app
 
-import example.app.CRDT.Operations._
 import example.app.CRDT._
+import example.app.Operations._
 
 import scala.collection.mutable
 
@@ -11,14 +11,14 @@ object CRDT {
   type ClientID = String
   type VPtr = (Time, ClientID)
   type Vertex[A] = (VPtr, Option[A])
+}
 
+object Operations {
   trait Operation[A]
 
-  object Operations {
-    case class Inserted[A](predecessor: VPtr, ptr: VPtr, value: A) extends Operation[A]
+  case class Inserted[A](predecessor: VPtr, ptr: VPtr, value: A) extends Operation[A]
 
-    case class Removed[A](ptr: VPtr) extends Operation[A]
-  }
+  case class Removed[A](ptr: VPtr) extends Operation[A]
 }
 
 class CRDT(site: ClientID) {
