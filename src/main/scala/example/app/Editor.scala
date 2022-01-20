@@ -4,18 +4,9 @@ import java.awt._
 import java.awt.event._
 import java.io._
 import javax.swing._
+import javax.swing.text.{AbstractDocument, AttributeSet, DocumentFilter}
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.JTextArea
-import java.awt.BorderLayout
-import javax.swing.event.{DocumentEvent, DocumentListener}
-import javax.swing.text.{AbstractDocument, AttributeSet, DocumentFilter}
-
-object Editor {
-  def main(args: Array[String]): Unit = new Editor
-}
 
 class Editor
   extends JFrame("Group 5 – Collaborative Text Editor")
@@ -24,6 +15,7 @@ class Editor
   // region Constructor
 
   import com.formdev.flatlaf.FlatLightLaf
+
   import javax.swing.UIManager
 
   UIManager.setLookAndFeel(new FlatLightLaf)
@@ -66,8 +58,6 @@ class Editor
   private val doc = textArea.getDocument.asInstanceOf[AbstractDocument]
   doc.setDocumentFilter(new DocumentInsertionFilter(client))
 
-  textArea.getDocument.addDocumentListener(new DocumentChangeListener(client))
-
   // endregion
   // region Methods
 
@@ -79,7 +69,6 @@ class Editor
       // insert / delete at the end
       diffIndex = caret + 1
     }
-    println(s"Index of change: $diffIndex")
 
     val offset = (diffIndex >= caret, isInsert) match {
       case (true, _) => 0
@@ -197,30 +186,6 @@ class Editor
   // endregion
 }
 
-class DocumentChangeListener(client: Client) extends DocumentListener {
-  def insertUpdate(e: DocumentEvent): Unit = {
-    logChange(e, "inserted into")
-  }
-
-  def removeUpdate(e: DocumentEvent): Unit = {
-    logChange(e, "removed from")
-  }
-
-  def changedUpdate(e: DocumentEvent): Unit = {
-    // Plain text components do not fire these events
-  }
-
-  def logChange(e: DocumentEvent, action: String): Unit = {
-    val changeLength = e.getLength
-    println(
-      s"$changeLength character${
-        if (changeLength == 1) " "
-        else "s "
-      }$action document at (${e.getOffset})"
-    )
-  }
-}
-
 class DocumentInsertionFilter(client: Client) extends DocumentFilter {
   override def replace(
                         fb: DocumentFilter.FilterBypass,
@@ -235,7 +200,6 @@ class DocumentInsertionFilter(client: Client) extends DocumentFilter {
       super.replace(fb, offset, length, text, attrs)
       for (c <- text.reverse) client.writeChar(offset, c)
     }
-    println(s"CRDT: ${client.crdt.asString}")
   }
 
   override def remove(
@@ -246,6 +210,5 @@ class DocumentInsertionFilter(client: Client) extends DocumentFilter {
     val indices = (offset until offset + length).reverse
     for (ix <- indices) client.deleteAt(ix + 1)
     super.remove(fb, offset, length)
-    println(s"CRDT: ${client.crdt.asString}")
   }
 }

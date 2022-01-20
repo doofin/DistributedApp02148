@@ -1,17 +1,14 @@
 package example
 
-import example.app.Editor
-import scala.io.StdIn.readLine
-import example.app.TextServer
+import example.app.{Editor, TextServer}
 
 object main {
 
   def main(args: Array[String]): Unit = {
     args.head match {
-      case "0" =>
+      case "client" =>
         new Editor
-        readLine("Press ENTER to stop the client\n")
-      case "1" =>
+      case "server" =>
         TextServer.run()
     }
   }

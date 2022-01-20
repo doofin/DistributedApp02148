@@ -1,8 +1,8 @@
 package example.app
 
 import example.ScalaSpaces.{RunnableOps, SpaceOps}
-import Common._
 import example.app.CRDT._
+import example.app.Common._
 import example.app.Event._
 import example.app.Operations._
 import org.jspace._
@@ -129,7 +129,6 @@ class Client(onUpdate: (String, Boolean) => Unit) {
     override def run(): Unit = {
       while (true) {
         space.getS(PING, clientID)
-        println("got a ping!")
       }
     }
   }

@@ -1,8 +1,8 @@
 package example.app
 
 import example.ScalaSpaces.{RunnableOps, SpaceOps}
+import example.app.Common._
 import example.app.Event._
-import Common._
 import example.app.TextServer.SessArray
 import org.jspace._
 
@@ -12,8 +12,6 @@ import scala.io.StdIn.readLine
 // Coordinates clients that work on some file
 object TextServer {
   type SessArray = util.ArrayList[(String, SequentialSpace)]
-
-  def main(args: Array[String]): Unit = run()
 
   def run(): Unit = {
     // Create a repository
