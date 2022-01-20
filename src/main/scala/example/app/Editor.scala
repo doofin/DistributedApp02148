@@ -14,15 +14,10 @@ import javax.swing.event.{DocumentEvent, DocumentListener}
 import javax.swing.text.{AbstractDocument, AttributeSet, DocumentFilter}
 import scala.io.StdIn.readLine
 
-object Editor {
-  def main(args: Array[String]): Unit = {
-    new Editor
-    readLine("Press ENTER to stop the client\n")
-  }
-}
+object Editor {}
 
 class Editor
-  extends JFrame("Group 5 – Collaborative Text Editor")
+    extends JFrame("Group 5 – Collaborative Text Editor")
     with ActionListener
     with AdjustmentListener {
   // region Constructor
@@ -98,10 +93,10 @@ class Editor
           if (client.joinSession(sessionID))
             statusBar.setText(s" Connected: $sessionID")
         }
-      case "Copy" => textArea.copy()
-      case "Cut" => textArea.cut()
+      case "Copy"  => textArea.copy()
+      case "Cut"   => textArea.cut()
       case "Paste" => textArea.paste()
-      case "Open" =>
+      case "Open"  =>
         // Create an object of JFileChooser class
         val fileOpener = new JFileChooser("f:")
 
@@ -111,8 +106,9 @@ class Editor
           Try {
             val path = fileOpener.getSelectedFile.getAbsolutePath
             val source = Source.fromFile(path)
-            val text = try source.getLines mkString "\n"
-            finally source.close()
+            val text =
+              try source.getLines mkString "\n"
+              finally source.close()
             textArea.setText(text)
           } match {
             case Success(_) => ()
@@ -200,19 +196,20 @@ class DocumentChangeListener(client: Client) extends DocumentListener {
   def logChange(e: DocumentEvent, action: String): Unit = {
     val changeLength = e.getLength
     println(
-      s"$changeLength character${if (changeLength == 1) " " else "s "}$action document at (${e.getOffset})"
+      s"$changeLength character${if (changeLength == 1) " "
+      else "s "}$action document at (${e.getOffset})"
     )
   }
 }
 
 class DocumentInsertionFilter(client: Client) extends DocumentFilter {
   override def replace(
-                        fb: DocumentFilter.FilterBypass,
-                        offset: Int,
-                        length: Int,
-                        text: String,
-                        attrs: AttributeSet
-                      ): Unit = {
+      fb: DocumentFilter.FilterBypass,
+      offset: Int,
+      length: Int,
+      text: String,
+      attrs: AttributeSet
+  ): Unit = {
     if (text.startsWith("[CRDT]")) {
       super.replace(fb, offset, length, text.drop(6), attrs)
     } else {
@@ -223,10 +220,10 @@ class DocumentInsertionFilter(client: Client) extends DocumentFilter {
   }
 
   override def remove(
-                       fb: DocumentFilter.FilterBypass,
-                       offset: Int,
-                       length: Int
-                     ): Unit = {
+      fb: DocumentFilter.FilterBypass,
+      offset: Int,
+      length: Int
+  ): Unit = {
     val indices = (offset until offset + length).reverse
     for (ix <- indices) client.deleteAt(ix + 1)
     super.remove(fb, offset, length)

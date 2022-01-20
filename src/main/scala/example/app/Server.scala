@@ -9,12 +9,11 @@ import org.jspace._
 import java.util
 import scala.io.StdIn.readLine
 
-
 // Coordinates clients that work on some file
 object TextServer {
   type SessArray = util.ArrayList[(String, SequentialSpace)]
 
-  def main(args: Array[String]): Unit = {
+  def run(): Unit = {
     // Create a repository
 
     val repo = new SpaceRepository
@@ -52,7 +51,11 @@ class SessionIdCreator(lobby: Space) extends Runnable {
 }
 
 /** for creating new session */
-class SessionStarter(repo: SpaceRepository, lobby: Space, sessionArray: SessArray) extends Runnable {
+class SessionStarter(
+    repo: SpaceRepository,
+    lobby: Space,
+    sessionArray: SessArray
+) extends Runnable {
   override def run(): Unit = {
     println("Listening for CREATE requests...")
     var ServerNumber = 1
@@ -106,7 +109,11 @@ class SessionJoiner(repo: SpaceRepository, lobby: Space) extends Runnable {
 }
 
 /** handling actions of cleaning up sessions after everyone leaves */
-class SessionCleanup(repo: SpaceRepository, lobby: Space, sessionArray: SessArray) extends Runnable {
+class SessionCleanup(
+    repo: SpaceRepository,
+    lobby: Space,
+    sessionArray: SessArray
+) extends Runnable {
   override def run(): Unit = {
     println("Listening for CLEANUP requests...")
     while (!Thread.currentThread().isInterrupted) {
