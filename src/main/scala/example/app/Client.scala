@@ -89,8 +89,8 @@ class Client(onUpdate: (String, Boolean) => Unit) {
     lobby.put(JOIN_SESSION, clientID, clientSessionID)
     val valid = verifySession(lobby, clientSessionID)
     if (valid) {
-      sessionID = clientSessionID
       clear()
+      sessionID = clientSessionID
       println(s"Joined a session: $sessionID")
 
       // Create remote space
